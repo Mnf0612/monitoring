@@ -8,29 +8,29 @@ class TicketService {
       id: '1',
       name: 'Équipe Power',
       type: 'power',
-      phone: '657416225',
-      members: ['John Doe', 'Jane Smith']
+      phone: '+237657416225',
+      members: ['Jean Mballa', 'Marie Nkomo']
     },
     {
       id: '2',
       name: 'Équipe IP',
       type: 'ip',
-      phone: '697039163',
-      members: ['Mike Johnson', 'Sarah Wilson']
+      phone: '+237697039163', // Votre numéro
+      members: ['Paul Essomba', 'Claire Fouda']
     },
     {
       id: '3',
       name: 'Équipe Transmission',
       type: 'transmission',
-      phone: '698796597',
-      members: ['David Brown', 'Lisa Davis']
+      phone: '+237698796597',
+      members: ['David Biya', 'Lisa Mengue']
     },
     {
       id: '4',
       name: 'Équipe BSS',
       type: 'bss',
-      phone: '692782310',
-      members: ['Chris Taylor', 'Amy White']
+      phone: '+237692782310',
+      members: ['Chris Atangana', 'Amy Ndongo']
     }
   ];
 
@@ -44,8 +44,8 @@ class TicketService {
       ip: 'ip',
       transmission: 'transmission',
       bss: 'bss',
-      hardware: 'transmission',
-      security: 'ip'
+      hardware: 'transmission', // Hardware -> Transmission
+      security: 'ip'            // Security -> IP
     };
 
     return typeMapping[alarmType.toLowerCase()] || 'bss';
@@ -85,12 +85,27 @@ class TicketService {
 
     this.tickets.push(ticket);
 
-    // Send SMS notification
-    await twilioService.sendTicketNotification(
-      team,
-      ticketId,
-      `${alarm.site} - ${alarm.message}`
-    );
+    console.log(`🎫 Nouveau ticket créé: ${ticketId} pour l'équipe ${team}`);
+    console.log(`📍 Site: ${alarm.site}`);
+    console.log(`⚠️ Type: ${alarm.type} | Sévérité: ${alarm.severity}`);
+    console.log(`👥 Assigné à: ${this.getTeamName(team)}`);
+
+    // Envoyer notification SMS
+    try {
+      const smsResult = await twilioService.sendTicketNotification(
+        team,
+        ticketId,
+        `${alarm.site} - ${alarm.message}`
+      );
+      
+      if (smsResult) {
+        console.log(`✅ Notification SMS envoyée avec succès à l'équipe ${team}`);
+      } else {
+        console.log(`❌ Échec d'envoi SMS à l'équipe ${team}`);
+      }
+    } catch (error) {
+      console.error(`❌ Erreur lors de l'envoi SMS:`, error);
+    }
 
     return ticket;
   }
@@ -101,11 +116,13 @@ class TicketService {
   }
 
   getTickets(): Ticket[] {
-    return this.tickets;
+    return this.tickets.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
   getTicketsByTeam(teamType: string): Ticket[] {
-    return this.tickets.filter(ticket => ticket.team === teamType);
+    return this.tickets
+      .filter(ticket => ticket.team === teamType)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
   getTicketById(id: string): Ticket | undefined {
@@ -115,16 +132,34 @@ class TicketService {
   async updateTicket(id: string, update: string, status?: string): Promise<Ticket | null> {
     const ticket = this.tickets.find(t => t.id === id);
     
-    if (!ticket) return null;
+    if (!ticket) {
+      console.error(`❌ Ticket ${id} non trouvé`);
+      return null;
+    }
 
     ticket.update = update;
     ticket.updatedAt = new Date().toISOString();
     
-    if (status) {
+    console.log(`📝 Ticket ${id} mis à jour par ${ticket.owner}`);
+    console.log(`💬 Commentaire: ${update}`);
+    
+    if (status && status !== ticket.status) {
+      const oldStatus = ticket.status;
       ticket.status = status as any;
       
-      // Send SMS notification for status change
-      await twilioService.sendTicketUpdate(ticket.team, id, status);
+      console.log(`🔄 Statut changé: ${oldStatus} → ${status}`);
+      
+      // Envoyer notification SMS pour changement de statut
+      try {
+        const smsResult = await twilioService.sendTicketUpdate(ticket.team, id, status);
+        if (smsResult) {
+          console.log(`✅ Notification de mise à jour envoyée à l'équipe ${ticket.team}`);
+        } else {
+          console.log(`❌ Échec d'envoi de notification de mise à jour`);
+        }
+      } catch (error) {
+        console.error(`❌ Erreur lors de l'envoi de notification:`, error);
+      }
     }
 
     return ticket;
@@ -149,6 +184,23 @@ class TicketService {
       closed,
       highPriority: this.tickets.filter(t => t.priority === 'high').length
     };
+  }
+
+  // Méthode pour tester la création de ticket
+  async testTicketCreation(): Promise<void> {
+    const testAlarm: Alarm = {
+      id: 'TEST-' + Date.now(),
+      site: 'BTS-TEST-001',
+      type: 'ip',
+      severity: 'major',
+      message: 'Test de création de ticket - Connectivité IP interrompue',
+      timestamp: new Date().toISOString(),
+      status: 'active',
+      region: 'Centre'
+    };
+
+    console.log('🧪 Test de création de ticket...');
+    await this.createTicketFromAlarm(testAlarm);
   }
 }
 

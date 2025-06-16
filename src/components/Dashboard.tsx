@@ -3,9 +3,10 @@ import { AlarmPanel } from './AlarmPanel';
 import { StatsCards } from './StatsCards';
 import { RegionMap } from './RegionMap';
 import { AlarmChart } from './AlarmChart';
+import { TopImpactedSites } from './TopImpactedSites';
 import { alarmService } from '../services/alarmService';
 import { DashboardStats } from '../types';
-import { Activity, Zap, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Activity, Zap, AlertTriangle, CheckCircle, TrendingUp } from 'lucide-react';
 
 export function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({
@@ -18,11 +19,24 @@ export function Dashboard() {
   });
 
   const [selectedRegion, setSelectedRegion] = useState<string>('all');
+  const [refreshKey, setRefreshKey] = useState(0);
   const regions = alarmService.getRegions();
 
   useEffect(() => {
-    const dashboardStats = alarmService.getDashboardStats();
-    setStats(dashboardStats);
+    const updateStats = () => {
+      const dashboardStats = alarmService.getDashboardStats();
+      setStats(dashboardStats);
+    };
+
+    updateStats();
+    
+    // Actualiser les stats toutes les 30 secondes
+    const interval = setInterval(() => {
+      updateStats();
+      setRefreshKey(prev => prev + 1);
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const statCards = [
@@ -57,12 +71,20 @@ export function Dashboard() {
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-6">
-            <h1 className="text-3xl font-bold text-gray-900">
-              Dashboard de Monitoring BTS
-            </h1>
-            <p className="mt-2 text-gray-600">
-              Surveillance en temps réel des sites et gestion des alarmes
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">
+                  Dashboard de Monitoring BTS
+                </h1>
+                <p className="mt-2 text-gray-600">
+                  Surveillance en temps réel des 50 sites BTS - 10 régions du Cameroun
+                </p>
+              </div>
+              <div className="flex items-center space-x-2 text-sm text-gray-500">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span>Mise à jour automatique</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -79,13 +101,15 @@ export function Dashboard() {
             />
           </div>
           
-          <div>
+          <div className="space-y-6">
             <AlarmChart alarms={alarmService.getAlarms()} />
+            <TopImpactedSites sites={alarmService.getTopImpactedSites()} />
           </div>
         </div>
 
         <div className="mt-8">
           <AlarmPanel 
+            key={refreshKey}
             alarms={selectedRegion === 'all' 
               ? alarmService.getAlarms() 
               : alarmService.getAlarmsByRegion(selectedRegion)
