@@ -1,5 +1,5 @@
 import { Alarm, Ticket, Team } from '../types';
-import { twilioService } from './twilioService';
+import { emailService } from './emailService';
 
 class TicketService {
   private tickets: Ticket[] = [];
@@ -15,7 +15,7 @@ class TicketService {
       id: '2',
       name: 'Équipe IP',
       type: 'ip',
-      phone: '+237697039163', // Votre numéro
+      phone: '+237697039163',
       members: ['Paul Essomba', 'Claire Fouda']
     },
     {
@@ -90,21 +90,22 @@ class TicketService {
     console.log(`⚠️ Type: ${alarm.type} | Sévérité: ${alarm.severity}`);
     console.log(`👥 Assigné à: ${this.getTeamName(team)}`);
 
-    // Envoyer notification SMS
+    // Envoyer notification par email
     try {
-      const smsResult = await twilioService.sendTicketNotification(
+      const emailResult = await emailService.sendTicketNotification(
         team,
         ticketId,
-        `${alarm.site} - ${alarm.message}`
+        alarm.message,
+        alarm.site
       );
       
-      if (smsResult) {
-        console.log(`✅ Notification SMS envoyée avec succès à l'équipe ${team}`);
+      if (emailResult) {
+        console.log(`✅ Notification email envoyée avec succès à l'équipe ${team}`);
       } else {
-        console.log(`❌ Échec d'envoi SMS à l'équipe ${team}`);
+        console.log(`❌ Échec d'envoi email à l'équipe ${team}`);
       }
     } catch (error) {
-      console.error(`❌ Erreur lors de l'envoi SMS:`, error);
+      console.error(`❌ Erreur lors de l'envoi email:`, error);
     }
 
     return ticket;
@@ -149,10 +150,10 @@ class TicketService {
       
       console.log(`🔄 Statut changé: ${oldStatus} → ${status}`);
       
-      // Envoyer notification SMS pour changement de statut
+      // Envoyer notification email pour changement de statut
       try {
-        const smsResult = await twilioService.sendTicketUpdate(ticket.team, id, status);
-        if (smsResult) {
+        const emailResult = await emailService.sendTicketUpdate(ticket.team, id, status, update);
+        if (emailResult) {
           console.log(`✅ Notification de mise à jour envoyée à l'équipe ${ticket.team}`);
         } else {
           console.log(`❌ Échec d'envoi de notification de mise à jour`);
@@ -186,7 +187,7 @@ class TicketService {
     };
   }
 
-  // Méthode pour tester la création de ticket
+  // Méthode pour tester la création de ticket avec email
   async testTicketCreation(): Promise<void> {
     const testAlarm: Alarm = {
       id: 'TEST-' + Date.now(),
@@ -199,7 +200,7 @@ class TicketService {
       region: 'Centre'
     };
 
-    console.log('🧪 Test de création de ticket...');
+    console.log('🧪 Test de création de ticket avec envoi d\'email...');
     await this.createTicketFromAlarm(testAlarm);
   }
 }
