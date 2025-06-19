@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { AlarmPanel } from './AlarmPanel';
 import { StatsCards } from './StatsCards';
-import { RegionMap } from './RegionMap';
+import { RegionChart } from './RegionChart';
 import { AlarmChart } from './AlarmChart';
 import { TopImpactedSites } from './TopImpactedSites';
 import { alarmService } from '../services/alarmService';
-import { emailService } from '../services/emailService';
-import { ticketService } from '../services/ticketService';
 import { DashboardStats } from '../types';
-import { Activity, Zap, AlertTriangle, CheckCircle, Mail, TestTube, Send } from 'lucide-react';
+import { Activity, Zap, AlertTriangle, CheckCircle } from 'lucide-react';
 
 export function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({
@@ -22,7 +20,6 @@ export function Dashboard() {
 
   const [selectedRegion, setSelectedRegion] = useState<string>('all');
   const [refreshKey, setRefreshKey] = useState(0);
-  const [isTestingEmail, setIsTestingEmail] = useState(false);
   const regions = alarmService.getRegions();
 
   useEffect(() => {
@@ -41,38 +38,6 @@ export function Dashboard() {
 
     return () => clearInterval(interval);
   }, []);
-
-  const handleTestEmail = async (team: string) => {
-    setIsTestingEmail(true);
-    try {
-      console.log(`🧪 Test d'envoi d'email RÉEL pour l'équipe ${team}...`);
-      const result = await emailService.testEmail(team);
-      if (result) {
-        alert(`✅ Email de test envoyé avec succès à l'équipe ${team}!`);
-      } else {
-        alert(`❌ Échec d'envoi de l'email de test à l'équipe ${team}`);
-      }
-    } catch (error) {
-      console.error('Erreur test email:', error);
-      alert('❌ Erreur lors du test d\'email');
-    } finally {
-      setIsTestingEmail(false);
-    }
-  };
-
-  const handleTestTicketCreation = async () => {
-    setIsTestingEmail(true);
-    try {
-      console.log('🧪 Test de création de ticket avec EMAIL RÉEL...');
-      await ticketService.testTicketCreation();
-      alert('✅ Ticket de test créé et email envoyé!');
-    } catch (error) {
-      console.error('Erreur test ticket:', error);
-      alert('❌ Erreur lors du test de création de ticket');
-    } finally {
-      setIsTestingEmail(false);
-    }
-  };
 
   const statCards = [
     {
@@ -120,43 +85,6 @@ export function Dashboard() {
                 <span>Mise à jour automatique</span>
               </div>
             </div>
-
-            {/* Boutons de test d'emails RÉELS */}
-            <div className="mt-6 bg-blue-50 rounded-lg p-4">
-              <h3 className="text-sm font-medium text-blue-900 mb-3 flex items-center">
-                <Mail className="w-4 h-4 mr-2" />
-                Tests d'envoi d'emails RÉELS
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => handleTestEmail('ip')}
-                  disabled={isTestingEmail}
-                  className="px-3 py-2 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center"
-                >
-                  <Send className="w-3 h-3 mr-1" />
-                  Test Email IP
-                </button>
-                <button
-                  onClick={() => handleTestEmail('bss')}
-                  disabled={isTestingEmail}
-                  className="px-3 py-2 text-xs font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center"
-                >
-                  <Send className="w-3 h-3 mr-1" />
-                  Test Email BSS
-                </button>
-                <button
-                  onClick={handleTestTicketCreation}
-                  disabled={isTestingEmail}
-                  className="px-3 py-2 text-xs font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 disabled:opacity-50 flex items-center"
-                >
-                  <TestTube className="w-3 h-3 mr-1" />
-                  Test Ticket Complet
-                </button>
-              </div>
-              <p className="text-xs text-blue-700 mt-2">
-                📧 Emails configurés: IP → manuelmayi581@gmail.com | BSS → manuelmayi237@gmail.com
-              </p>
-            </div>
           </div>
         </div>
       </div>
@@ -166,8 +94,9 @@ export function Dashboard() {
 
         <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <RegionMap 
+            <RegionChart 
               sites={alarmService.getSites()}
+              alarms={alarmService.getAlarms()}
               selectedRegion={selectedRegion}
               onRegionSelect={setSelectedRegion}
             />
