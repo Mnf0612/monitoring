@@ -90,7 +90,7 @@ class TicketService {
     console.log(`⚠️ Type: ${alarm.type} | Sévérité: ${alarm.severity}`);
     console.log(`👥 Assigné à: ${this.getTeamName(team)}`);
 
-    // Envoyer notification par email
+    // Envoyer notification par email RÉEL
     try {
       const emailResult = await emailService.sendTicketNotification(
         team,
@@ -100,12 +100,12 @@ class TicketService {
       );
       
       if (emailResult) {
-        console.log(`✅ Notification email envoyée avec succès à l'équipe ${team}`);
+        console.log(`✅ EMAIL RÉEL envoyé avec succès à l'équipe ${team}`);
       } else {
-        console.log(`❌ Échec d'envoi email à l'équipe ${team}`);
+        console.log(`❌ Échec d'envoi EMAIL RÉEL à l'équipe ${team}`);
       }
     } catch (error) {
-      console.error(`❌ Erreur lors de l'envoi email:`, error);
+      console.error(`❌ Erreur lors de l'envoi EMAIL RÉEL:`, error);
     }
 
     return ticket;
@@ -150,16 +150,16 @@ class TicketService {
       
       console.log(`🔄 Statut changé: ${oldStatus} → ${status}`);
       
-      // Envoyer notification email pour changement de statut
+      // Envoyer notification email RÉELLE pour changement de statut
       try {
         const emailResult = await emailService.sendTicketUpdate(ticket.team, id, status, update);
         if (emailResult) {
-          console.log(`✅ Notification de mise à jour envoyée à l'équipe ${ticket.team}`);
+          console.log(`✅ EMAIL RÉEL de mise à jour envoyé à l'équipe ${ticket.team}`);
         } else {
-          console.log(`❌ Échec d'envoi de notification de mise à jour`);
+          console.log(`❌ Échec d'envoi EMAIL RÉEL de mise à jour`);
         }
       } catch (error) {
-        console.error(`❌ Erreur lors de l'envoi de notification:`, error);
+        console.error(`❌ Erreur lors de l'envoi EMAIL RÉEL de notification:`, error);
       }
     }
 
@@ -187,7 +187,7 @@ class TicketService {
     };
   }
 
-  // Méthode pour tester la création de ticket avec email
+  // Méthode pour tester la création de ticket avec email RÉEL
   async testTicketCreation(): Promise<void> {
     const testAlarm: Alarm = {
       id: 'TEST-' + Date.now(),
@@ -200,7 +200,7 @@ class TicketService {
       region: 'Centre'
     };
 
-    console.log('🧪 Test de création de ticket avec envoi d\'email...');
+    console.log('🧪 Test de création de ticket avec envoi d\'EMAIL RÉEL...');
     await this.createTicketFromAlarm(testAlarm);
   }
 }
