@@ -1,241 +1,350 @@
 # BTS Network Monitoring Dashboard
 
-Un tableau de bord complet pour la surveillance des sites BTS (Base Transceiver Station) avec gestion automatique des tickets d'alarmes et notifications SMS.
+Un système complet de surveillance des sites BTS (Base Transceiver Station) avec authentification, gestion des utilisateurs, alarmes automatiques et système de tickets.
+
+## 🏗️ Architecture
+
+### Frontend (React + TypeScript)
+- **Framework**: React 18 avec TypeScript
+- **Styling**: Tailwind CSS
+- **Charts**: Recharts pour les graphiques
+- **Icons**: Lucide React
+- **Build**: Vite
+
+### Backend (Django REST API)
+- **Framework**: Django 4.2 avec Django REST Framework
+- **Base de données**: PostgreSQL
+- **Cache/Queue**: Redis + Celery
+- **WebSockets**: Django Channels
+- **Authentification**: Token-based authentication
 
 ## 🚀 Fonctionnalités
 
-### Dashboard Principal
-- **Surveillance en temps réel** des sites BTS par région
-- **Visualisation des alarmes** avec graphiques interactifs
-- **Cartes régionales** avec statut des sites
-- **Statistiques en temps réel** (sites actifs, alarmes critiques, etc.)
+### 🔐 Système d'Authentification
+- **Connexion sécurisée** avec tokens
+- **Gestion des rôles** : Admin, Opérateur, Technicien
+- **Permissions granulaires** par rôle
+- **Gestion des sessions** persistantes
 
-### Gestion des Tickets
-- **Création automatique de tickets** pour chaque alarme
-- **Attribution intelligente** aux équipes selon le type d'alarme
-- **Notifications SMS automatiques** via Twilio
-- **Suivi et mise à jour** des tickets par les équipes
-- **Filtrage avancé** par équipe, statut et priorité
+### 👥 Gestion des Utilisateurs (Admin)
+- **CRUD complet** des utilisateurs
+- **Attribution des rôles** et équipes
+- **Activation/désactivation** des comptes
+- **Historique des connexions**
 
-### Types d'Alarmes Supportées
-- **Power** : Pannes d'alimentation
-- **IP** : Problèmes de connectivité réseau
-- **Transmission** : Problèmes de signal
-- **BSS** : Problèmes de contrôleur de station de base
-- **Hardware** : Défaillances matérielles
-- **Security** : Alertes de sécurité
+### 📊 Dashboard de Monitoring
+- **Surveillance temps réel** des 50 sites BTS
+- **Cartes interactives** par région
+- **Statistiques détaillées** et graphiques
+- **Filtrage avancé** par région/statut
 
-## 🛠️ Technologies Utilisées
+### 🚨 Système d'Alarmes
+- **Génération automatique** d'alarmes
+- **Types d'alarmes** : Power, IP, Transmission, BSS, Hardware, Security
+- **Niveaux de sévérité** : Critical, Major, Minor, Warning
+- **Historique complet** des alarmes
 
-- **Frontend** : React 18 + TypeScript
-- **Styling** : Tailwind CSS
-- **Charts** : Recharts
-- **Icons** : Lucide React
-- **Build Tool** : Vite
-- **Notifications** : Twilio SMS API
-- **Date Handling** : date-fns
+### 🎫 Gestion des Tickets
+- **Création automatique** de tickets pour chaque alarme
+- **Attribution intelligente** aux équipes spécialisées
+- **Suivi complet** du cycle de vie
+- **Commentaires et pièces jointes**
+
+### 📧 Notifications
+- **Emails automatiques** via EmailJS
+- **SMS** via Twilio (configurable)
+- **Notifications temps réel** via WebSockets
 
 ## 📋 Prérequis
 
-Avant de commencer, assurez-vous d'avoir installé :
+### Système
+- **Python 3.9+**
+- **Node.js 18+**
+- **PostgreSQL 13+**
+- **Redis 6+**
 
-- **Node.js** (version 18 ou supérieure)
-- **npm** ou **yarn**
-- **Git**
+### Comptes de service (optionnels)
+- **EmailJS** pour les notifications email
+- **Twilio** pour les SMS
 
-## 🚀 Installation et Déploiement Local
+## 🛠️ Installation
 
 ### 1. Cloner le Projet
 
 ```bash
 git clone <url-du-repository>
-cd network-monitoring-dashboard
+cd bts-monitoring-system
 ```
 
-### 2. Installer les Dépendances
+### 2. Configuration Backend (Django)
 
 ```bash
+# Créer l'environnement virtuel
+cd backend
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# ou
+venv\Scripts\activate     # Windows
+
+# Installer les dépendances
+pip install -r requirements.txt
+
+# Configuration de la base de données
+cp .env.example .env
+# Éditer .env avec vos paramètres
+
+# Migrations
+python manage.py makemigrations
+python manage.py migrate
+
+# Créer un superutilisateur
+python manage.py createsuperuser
+
+# Charger les données de test
+python manage.py loaddata fixtures/initial_data.json
+
+# Lancer le serveur
+python manage.py runserver
+```
+
+### 3. Configuration Frontend (React)
+
+```bash
+# Installer les dépendances
+cd frontend  # ou racine si frontend dans src/
 npm install
-```
 
-### 3. Configuration Twilio (Optionnel)
-
-Pour activer les notifications SMS, configurez vos identifiants Twilio dans `src/services/twilioService.ts` :
-
-```typescript
-private accountSid = 'VOTRE_ACCOUNT_SID';
-private authToken = 'VOTRE_AUTH_TOKEN';
-private fromNumber = 'VOTRE_NUMERO_TWILIO';
-```
-
-### 4. Lancer l'Application en Mode Développement
-
-```bash
+# Lancer le serveur de développement
 npm run dev
 ```
 
-L'application sera accessible à l'adresse : `http://localhost:5173`
-
-### 5. Build pour la Production
+### 4. Services Additionnels
 
 ```bash
+# Redis (pour Celery et WebSockets)
+redis-server
+
+# Celery Worker (dans un terminal séparé)
+cd backend
+celery -A bts_monitoring worker -l info
+
+# Celery Beat (pour les tâches périodiques)
+celery -A bts_monitoring beat -l info
+```
+
+## 🔧 Configuration
+
+### Variables d'Environnement (.env)
+
+```env
+# Django
+DEBUG=True
+SECRET_KEY=your-secret-key-here
+DATABASE_URL=postgresql://user:password@localhost:5432/bts_monitoring
+
+# Redis
+REDIS_URL=redis://localhost:6379/0
+
+# Email (EmailJS)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_HOST_PASSWORD=your-app-password
+
+# Twilio (SMS)
+TWILIO_ACCOUNT_SID=your-account-sid
+TWILIO_AUTH_TOKEN=your-auth-token
+TWILIO_PHONE_NUMBER=your-twilio-number
+
+# CORS
+CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+```
+
+### Configuration EmailJS (Frontend)
+
+1. Créer un compte sur [EmailJS.com](https://www.emailjs.com/)
+2. Configurer un service email (Gmail, Outlook, etc.)
+3. Créer un template avec les variables nécessaires
+4. Mettre à jour les clés dans `src/services/emailService.ts`
+
+## 👤 Comptes de Démonstration
+
+| Utilisateur | Mot de passe | Rôle | Permissions |
+|-------------|--------------|------|-------------|
+| `admin` | `admin123` | Administrateur | Accès complet |
+| `operator1` | `operator123` | Opérateur | Dashboard + Tickets |
+| `tech1` | `tech123` | Technicien | Tickets assignés |
+
+## 📱 API Endpoints
+
+### Authentification
+```
+POST /api/auth/login/          # Connexion
+POST /api/auth/logout/         # Déconnexion
+GET  /api/auth/profile/        # Profil utilisateur
+GET  /api/auth/users/          # Liste des utilisateurs (admin)
+POST /api/auth/users/          # Créer un utilisateur (admin)
+```
+
+### Monitoring
+```
+GET  /api/monitoring/sites/           # Liste des sites
+GET  /api/monitoring/alarms/          # Liste des alarmes
+POST /api/monitoring/alarms/          # Créer une alarme
+GET  /api/monitoring/dashboard/stats/ # Statistiques dashboard
+```
+
+### Tickets
+```
+GET  /api/tickets/              # Liste des tickets
+POST /api/tickets/              # Créer un ticket
+PUT  /api/tickets/{id}/         # Mettre à jour un ticket
+POST /api/tickets/{id}/comment/ # Ajouter un commentaire
+```
+
+## 🔄 Workflow des Alarmes
+
+1. **Génération automatique** d'alarmes (Celery task)
+2. **Création de ticket** automatique
+3. **Attribution à l'équipe** selon le type d'alarme
+4. **Notification email/SMS** à l'équipe
+5. **Prise en charge** par un technicien
+6. **Résolution** avec commentaires
+7. **Fermeture** du ticket
+
+## 📊 Structure de la Base de Données
+
+### Tables Principales
+- **Users** : Utilisateurs avec rôles et équipes
+- **Regions** : Régions du Cameroun
+- **Sites** : Sites BTS avec coordonnées
+- **Alarms** : Alarmes avec historique
+- **Teams** : Équipes techniques
+- **Tickets** : Tickets avec suivi complet
+
+## 🚀 Déploiement en Production
+
+### Option 1: Docker (Recommandé)
+
+```bash
+# Construire les images
+docker-compose build
+
+# Lancer les services
+docker-compose up -d
+
+# Migrations
+docker-compose exec backend python manage.py migrate
+
+# Créer un superutilisateur
+docker-compose exec backend python manage.py createsuperuser
+```
+
+### Option 2: Serveur Traditionnel
+
+```bash
+# Backend
+pip install gunicorn
+gunicorn bts_monitoring.wsgi:application
+
+# Frontend
 npm run build
+# Servir les fichiers statiques avec nginx
+
+# Services
+systemctl start redis
+systemctl start postgresql
+systemctl start celery-worker
+systemctl start celery-beat
 ```
 
-Les fichiers de production seront générés dans le dossier `dist/`.
+## 🔧 Maintenance
 
-### 6. Prévisualiser la Version de Production
+### Commandes Utiles
 
 ```bash
-npm run preview
+# Nettoyer les anciennes alarmes
+python manage.py shell
+>>> from monitoring.models import Alarm
+>>> Alarm.objects.filter(created_at__lt='2024-01-01').delete()
+
+# Backup de la base de données
+pg_dump bts_monitoring > backup.sql
+
+# Logs
+tail -f bts_monitoring.log
 ```
 
-## 📱 Configuration des Équipes et Numéros SMS
+### Monitoring de Production
 
-Les équipes et leurs numéros de téléphone sont configurés dans `src/services/ticketService.ts` :
-
-```typescript
-private teams: Team[] = [
-  {
-    id: '1',
-    name: 'Équipe Power',
-    type: 'power',
-    phone: '657416225',
-    members: ['John Doe', 'Jane Smith']
-  },
-  // ... autres équipes
-];
-```
-
-## 🎯 Utilisation
-
-### Dashboard Principal
-
-1. **Vue d'ensemble** : Consultez les statistiques globales
-2. **Carte des régions** : Cliquez sur une région pour filtrer les données
-3. **Analyse des alarmes** : Visualisez la répartition par sévérité et type
-4. **Liste des alarmes** : Consultez toutes les alarmes actives
-
-### Gestion des Tickets
-
-1. **Navigation** : Cliquez sur "Gestion des Tickets" dans le menu
-2. **Filtrage** : Utilisez les filtres pour voir vos tickets
-3. **Mise à jour** : Cliquez sur un ticket pour l'ouvrir et le mettre à jour
-4. **Résolution** : Changez le statut et ajoutez vos commentaires
-
-## 🔧 Structure du Projet
-
-```
-src/
-├── components/           # Composants React
-│   ├── Dashboard.tsx     # Dashboard principal
-│   ├── TicketDashboard.tsx # Dashboard des tickets
-│   ├── AlarmPanel.tsx    # Panneau des alarmes
-│   ├── TicketList.tsx    # Liste des tickets
-│   └── ...
-├── services/            # Services métier
-│   ├── alarmService.ts  # Gestion des alarmes
-│   ├── ticketService.ts # Gestion des tickets
-│   └── twilioService.ts # Notifications SMS
-├── types/               # Types TypeScript
-│   └── index.ts
-└── App.tsx             # Composant principal
-```
-
-## 📊 Données de Test
-
-L'application inclut des données de test pour :
-- 4 sites BTS dans différentes régions du Cameroun
-- Alarmes de différents types et sévérités
-- Tickets automatiquement générés
-
-## 🚨 Workflow des Alarmes et Tickets
-
-1. **Détection d'alarme** → Création automatique dans le système
-2. **Génération de ticket** → Attribution à l'équipe appropriée
-3. **Notification SMS** → Envoi automatique à l'équipe
-4. **Prise en charge** → L'équipe accède au dashboard
-5. **Résolution** → Mise à jour du ticket avec la solution
-6. **Notification de suivi** → SMS de confirmation du changement de statut
-
-## 🔐 Sécurité
-
-- Validation des données côté client
-- Gestion des erreurs robuste
-- Logs des actions importantes
-- Authentification des équipes (à implémenter selon vos besoins)
-
-## 🌐 Déploiement en Production
-
-### Option 1 : Netlify (Recommandé)
-```bash
-npm run build
-# Déployez le contenu du dossier dist/ sur Netlify
-```
-
-### Option 2 : Serveur Web Traditionnel
-```bash
-npm run build
-# Copiez le contenu de dist/ vers votre serveur web
-```
-
-### Option 3 : Docker
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-RUN npm run build
-EXPOSE 3000
-CMD ["npm", "run", "preview"]
-```
+- **Logs** : Centralisés avec niveau INFO
+- **Métriques** : CPU, mémoire, base de données
+- **Alertes** : Email en cas d'erreur critique
+- **Backup** : Automatique quotidien
 
 ## 🐛 Dépannage
 
 ### Problèmes Courants
 
-1. **Port déjà utilisé** : Changez le port dans `vite.config.ts`
-2. **Erreurs de build** : Vérifiez les versions de Node.js et npm
-3. **SMS non envoyés** : Vérifiez la configuration Twilio
+1. **Erreur de connexion DB** : Vérifier PostgreSQL et les credentials
+2. **Redis non accessible** : Vérifier le service Redis
+3. **Emails non envoyés** : Vérifier la configuration EmailJS
+4. **WebSockets non fonctionnels** : Vérifier Redis et Channels
 
-### Logs de Debug
+### Debug Mode
 
-Les logs sont disponibles dans la console du navigateur pour :
-- Création de tickets
-- Envoi de SMS
-- Erreurs de l'application
+```bash
+# Backend
+DEBUG=True python manage.py runserver
+
+# Frontend
+npm run dev
+
+# Logs détaillés
+tail -f bts_monitoring.log
+```
 
 ## 📞 Support
 
-Pour toute question ou problème :
-1. Vérifiez les logs de la console
-2. Consultez la documentation Twilio pour les SMS
-3. Vérifiez la configuration des équipes
+### Logs de Debug
+- **Backend** : `bts_monitoring.log`
+- **Frontend** : Console du navigateur
+- **Celery** : Logs des workers
 
-## 🔄 Mises à Jour
+### Monitoring
+- **Health Check** : `/api/health/`
+- **Admin Panel** : `/admin/`
+- **API Documentation** : `/api/docs/`
 
-Pour mettre à jour l'application :
+## 🤝 Contribution
 
-```bash
-git pull origin main
-npm install
-npm run build
-```
+1. **Fork** le projet
+2. **Créer une branche** pour votre fonctionnalité
+3. **Commiter** vos changements
+4. **Pousser** vers la branche
+5. **Ouvrir une Pull Request**
 
 ## 📝 Licence
 
 Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
 
-## 🤝 Contribution
+## 🔄 Roadmap
 
-Les contributions sont les bienvenues ! Veuillez :
-1. Fork le projet
-2. Créer une branche pour votre fonctionnalité
-3. Commiter vos changements
-4. Pousser vers la branche
-5. Ouvrir une Pull Request
+### Version 2.0
+- [ ] Application mobile (React Native)
+- [ ] Intégration IoT pour monitoring temps réel
+- [ ] Machine Learning pour prédiction de pannes
+- [ ] API GraphQL
+- [ ] Multi-tenancy
+
+### Version 1.5
+- [ ] Rapports automatiques PDF
+- [ ] Intégration Slack/Teams
+- [ ] Géolocalisation avancée
+- [ ] Tableau de bord personnalisable
 
 ---
 
 **Développé pour la surveillance et maintenance proactive des réseaux BTS** 📡
+
+**Stack Technique** : React + TypeScript + Django + PostgreSQL + Redis + Celery
