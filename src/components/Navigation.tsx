@@ -1,14 +1,22 @@
 import React, { useState } from 'react';
-import { Activity, Ticket, Users, Settings, Mail } from 'lucide-react';
+import { Activity, Ticket, Users, Settings, Mail, LogOut, User, Shield } from 'lucide-react';
+import { authService } from '../services/authService';
 import { EmailConfigModal } from './EmailConfigModal';
 
 interface NavigationProps {
-  currentPage: 'dashboard' | 'tickets';
-  onPageChange: (page: 'dashboard' | 'tickets') => void;
+  currentPage: 'dashboard' | 'tickets' | 'admin';
+  onPageChange: (page: 'dashboard' | 'tickets' | 'admin') => void;
+  onLogout: () => void;
 }
 
-export function Navigation({ currentPage, onPageChange }: NavigationProps) {
+export function Navigation({ currentPage, onPageChange, onLogout }: NavigationProps) {
   const [isEmailConfigOpen, setIsEmailConfigOpen] = useState(false);
+  const user = authService.getCurrentUser();
+
+  const handleLogout = () => {
+    authService.logout();
+    onLogout();
+  };
 
   return (
     <>
@@ -45,13 +53,27 @@ export function Navigation({ currentPage, onPageChange }: NavigationProps) {
                   <Ticket className="w-4 h-4 mr-2" />
                   Gestion des Tickets
                 </button>
+
+                {authService.hasPermission('view_admin') && (
+                  <button
+                    onClick={() => onPageChange('admin')}
+                    className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                      currentPage === 'admin'
+                        ? 'border-blue-500 text-gray-900'
+                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                    }`}
+                  >
+                    <Shield className="w-4 h-4 mr-2" />
+                    Administration
+                  </button>
+                )}
               </div>
             </div>
 
             <div className="flex items-center space-x-4">
               <div className="flex items-center text-sm text-gray-500">
-                <Users className="w-4 h-4 mr-1" />
-                <span>Équipe Réseau</span>
+                <User className="w-4 h-4 mr-1" />
+                <span>{user?.username} ({user?.role})</span>
               </div>
               
               <button 
@@ -62,8 +84,19 @@ export function Navigation({ currentPage, onPageChange }: NavigationProps) {
                 <Mail className="w-5 h-5" />
               </button>
               
-              <button className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100">
+              <button 
+                className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
+                title="Paramètres"
+              >
                 <Settings className="w-5 h-5" />
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="p-2 text-gray-400 hover:text-red-600 rounded-full hover:bg-gray-100"
+                title="Se déconnecter"
+              >
+                <LogOut className="w-5 h-5" />
               </button>
             </div>
           </div>

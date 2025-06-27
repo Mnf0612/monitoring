@@ -1,3 +1,20 @@
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  role: 'admin' | 'operator' | 'technician';
+  team?: 'power' | 'ip' | 'transmission' | 'bss';
+  isActive: boolean;
+  createdAt: string;
+  lastLogin?: string;
+}
+
+export interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+}
+
 export interface Alarm {
   id: string;
   site: string;
