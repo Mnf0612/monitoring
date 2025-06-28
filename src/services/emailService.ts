@@ -1,22 +1,22 @@
 import emailjs from '@emailjs/browser';
 
 class EmailService {
-  // Configuration EmailJS - VOS VRAIES CLÉS
+  // Configuration EmailJS intégrée directement
   private serviceId = 'Alarm_alerte';
   private templateId = 'template_bts_ticket';
   private publicKey = 'enCPeU5Qt9qR3j9jl';
 
   private teamEmails = {
     ip: 'manuelmayi581@gmail.com',
-    transmission: 'transmission@company.com',
-    bss: 'manuelmayi237@gmail.com',
-    power: 'power@company.com'
+    transmission: 'manuelmayi581@gmail.com',
+    bss: 'manuelmayi581@gmail.com',
+    power: 'manuelmayi581@gmail.com'
   };
 
   constructor() {
-    // Initialiser EmailJS avec votre vraie clé publique
+    // Initialiser EmailJS automatiquement
     emailjs.init(this.publicKey);
-    console.log('✅ EmailJS initialisé avec la configuration réelle');
+    console.log('✅ EmailJS initialisé automatiquement avec la configuration');
   }
 
   async sendTicketNotification(team: string, ticketId: string, alarmMessage: string, site: string): Promise<boolean> {
@@ -43,7 +43,7 @@ class EmailService {
     };
 
     try {
-      console.log(`📧 Envoi d'email RÉEL en cours...`);
+      console.log(`📧 Envoi d'email automatique en cours...`);
       console.log(`📞 Destinataire: ${email}`);
       console.log(`👥 Équipe: ${this.getTeamName(team)}`);
       console.log(`🎫 Ticket: #${ticketId}`);
@@ -55,7 +55,7 @@ class EmailService {
         templateParams
       );
       
-      console.log(`✅ EMAIL RÉEL ENVOYÉ AVEC SUCCÈS!`);
+      console.log(`✅ EMAIL AUTOMATIQUE ENVOYÉ AVEC SUCCÈS!`);
       console.log(`📧 Status: ${result.status}`);
       console.log(`📧 Text: ${result.text}`);
       console.log(`⏰ Heure: ${new Date().toLocaleString('fr-FR')}`);
@@ -63,7 +63,7 @@ class EmailService {
       
       return true;
     } catch (error) {
-      console.error('❌ Échec d\'envoi email RÉEL:', error);
+      console.error('❌ Échec d\'envoi email automatique:', error);
       return false;
     }
   }
@@ -90,7 +90,7 @@ class EmailService {
     };
 
     try {
-      console.log(`📧 Envoi d'email de mise à jour RÉEL...`);
+      console.log(`📧 Envoi d'email de mise à jour automatique...`);
       console.log(`📞 Destinataire: ${email}`);
       console.log(`🎫 Ticket: #${ticketId}`);
       console.log(`🔄 Nouveau statut: ${this.getStatusText(status)}`);
@@ -101,14 +101,14 @@ class EmailService {
         templateParams
       );
       
-      console.log(`✅ EMAIL DE MISE À JOUR RÉEL ENVOYÉ!`);
+      console.log(`✅ EMAIL DE MISE À JOUR AUTOMATIQUE ENVOYÉ!`);
       console.log(`📧 Status: ${result.status}`);
       console.log(`⏰ Heure: ${new Date().toLocaleString('fr-FR')}`);
       console.log('─'.repeat(50));
       
       return true;
     } catch (error) {
-      console.error('❌ Échec d\'envoi email de mise à jour RÉEL:', error);
+      console.error('❌ Échec d\'envoi email de mise à jour automatique:', error);
       return false;
     }
   }
@@ -143,52 +143,28 @@ class EmailService {
     return 'BASSE';
   }
 
-  // Méthode pour tester l'envoi d'email RÉEL
+  // Méthode pour tester l'envoi d'email
   async testEmail(team: string = 'ip'): Promise<boolean> {
-    console.log(`🧪 Test d'envoi d'email RÉEL pour l'équipe ${team}...`);
+    console.log(`🧪 Test d'envoi d'email automatique pour l'équipe ${team}...`);
     return await this.sendTicketNotification(
       team,
       'TEST-001',
-      'Test de notification - Alarme de test critique',
+      'Test de notification automatique - Alarme de test critique',
       'BTS-TEST-001'
     );
   }
 
-  // Méthode pour vérifier la configuration
+  // Méthode pour vérifier la configuration (toujours valide maintenant)
   checkConfiguration(): { isValid: boolean; issues: string[] } {
-    const issues: string[] = [];
-    
-    if (!this.serviceId) {
-      issues.push('Service ID EmailJS manquant');
-    }
-    
-    if (!this.templateId) {
-      issues.push('Template ID EmailJS manquant');
-    }
-    
-    if (!this.publicKey) {
-      issues.push('Clé publique EmailJS manquante');
-    }
-
     return {
-      isValid: issues.length === 0,
-      issues
+      isValid: true,
+      issues: []
     };
   }
 
-  // Méthode pour mettre à jour la configuration
-  updateConfiguration(serviceId: string, templateId: string, publicKey: string) {
-    this.serviceId = serviceId;
-    this.templateId = templateId;
-    this.publicKey = publicKey;
-    emailjs.init(this.publicKey);
-    console.log('✅ Configuration EmailJS mise à jour');
-  }
-
-  // Méthode pour ajouter/modifier un email d'équipe
-  updateTeamEmail(team: string, email: string) {
-    this.teamEmails[team as keyof typeof this.teamEmails] = email;
-    console.log(`✅ Email mis à jour pour l'équipe ${team}: ${email}`);
+  // Méthode pour obtenir le statut de la configuration
+  getConfigurationStatus(): string {
+    return '✅ Configuration EmailJS intégrée et prête';
   }
 }
 

@@ -194,7 +194,7 @@ class AlarmService {
     this.alarms.push(alarm);
     console.log(`🚨 Nouvelle alarme générée: ${alarm.site} - ${alarm.message}`);
 
-    // Créer automatiquement un ticket
+    // Créer automatiquement un ticket avec envoi d'email automatique
     await ticketService.createTicketFromAlarm(alarm);
   }
 
@@ -253,7 +253,7 @@ class AlarmService {
 
     this.alarms.push(alarm);
 
-    // Auto-créer ticket pour nouvelle alarme
+    // Auto-créer ticket pour nouvelle alarme avec envoi d'email automatique
     if (alarm.status === 'active') {
       await ticketService.createTicketFromAlarm(alarm);
     }

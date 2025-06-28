@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Mail, Key, Settings, CheckCircle, AlertTriangle } from 'lucide-react';
+import { X, Mail, CheckCircle, Settings } from 'lucide-react';
 import { emailService } from '../services/emailService';
 
 interface EmailConfigModalProps {
@@ -8,22 +8,10 @@ interface EmailConfigModalProps {
 }
 
 export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
-  const [serviceId, setServiceId] = useState('');
-  const [templateId, setTemplateId] = useState('');
-  const [publicKey, setPublicKey] = useState('');
   const [isTestingEmail, setIsTestingEmail] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   if (!isOpen) return null;
-
-  const handleSaveConfig = () => {
-    if (serviceId && templateId && publicKey) {
-      emailService.updateConfiguration(serviceId, templateId, publicKey);
-      setTestResult({ success: true, message: 'Configuration sauvegardée avec succès!' });
-    } else {
-      setTestResult({ success: false, message: 'Veuillez remplir tous les champs obligatoires.' });
-    }
-  };
 
   const handleTestEmail = async () => {
     setIsTestingEmail(true);
@@ -35,7 +23,7 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
         success: result,
         message: result 
           ? 'Email de test envoyé avec succès à manuelmayi581@gmail.com!' 
-          : 'Échec de l\'envoi de l\'email de test. Vérifiez votre configuration.'
+          : 'Échec de l\'envoi de l\'email de test. Vérifiez votre connexion internet.'
       });
     } catch (error) {
       setTestResult({
@@ -46,8 +34,6 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
       setIsTestingEmail(false);
     }
   };
-
-  const configStatus = emailService.checkConfiguration();
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -72,101 +58,74 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
 
           <div className="px-6 py-4">
             <div className="space-y-6">
-              {/* Instructions */}
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h3 className="text-sm font-medium text-blue-900 mb-2">
-                  Instructions de configuration
-                </h3>
-                <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
-                  <li>Créez un compte sur <a href="https://www.emailjs.com/" target="_blank" rel="noopener noreferrer" className="underline">EmailJS.com</a></li>
-                  <li>Créez un nouveau service email (Gmail, Outlook, etc.)</li>
-                  <li>Créez un template d'email avec les variables nécessaires</li>
-                  <li>Copiez vos identifiants ci-dessous</li>
-                </ol>
-              </div>
-
-              {/* Status actuel */}
-              <div className={`rounded-lg p-4 ${configStatus.isValid ? 'bg-green-50' : 'bg-red-50'}`}>
+              {/* Status de la configuration */}
+              <div className="bg-green-50 rounded-lg p-4">
                 <div className="flex items-center">
-                  {configStatus.isValid ? (
-                    <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
-                  ) : (
-                    <AlertTriangle className="w-5 h-5 text-red-500 mr-2" />
-                  )}
-                  <h3 className={`text-sm font-medium ${configStatus.isValid ? 'text-green-900' : 'text-red-900'}`}>
-                    {configStatus.isValid ? 'Configuration valide' : 'Configuration incomplète'}
+                  <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
+                  <h3 className="text-sm font-medium text-green-900">
+                    Configuration automatique activée
                   </h3>
                 </div>
-                {!configStatus.isValid && (
-                  <ul className="mt-2 text-sm text-red-800 list-disc list-inside">
-                    {configStatus.issues.map((issue, index) => (
-                      <li key={index}>{issue}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              {/* Formulaire de configuration */}
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Service ID *
-                  </label>
-                  <input
-                    type="text"
-                    value={serviceId}
-                    onChange={(e) => setServiceId(e.target.value)}
-                    placeholder="service_xxxxxxx"
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Template ID *
-                  </label>
-                  <input
-                    type="text"
-                    value={templateId}
-                    onChange={(e) => setTemplateId(e.target.value)}
-                    placeholder="template_xxxxxxx"
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Clé Publique *
-                  </label>
-                  <input
-                    type="text"
-                    value={publicKey}
-                    onChange={(e) => setPublicKey(e.target.value)}
-                    placeholder="Votre clé publique EmailJS"
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-
-              {/* Email de l'équipe IP */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="text-sm font-medium text-gray-900 mb-2">
-                  Email configuré pour l'équipe IP
-                </h3>
-                <p className="text-sm text-gray-600">
-                  📧 manuelmayi581@gmail.com
+                <p className="mt-2 text-sm text-green-800">
+                  {emailService.getConfigurationStatus()}
                 </p>
+              </div>
+
+              {/* Informations de configuration */}
+              <div className="bg-blue-50 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-blue-900 mb-2">
+                  Configuration intégrée
+                </h3>
+                <div className="text-sm text-blue-800 space-y-1">
+                  <p><strong>Service ID:</strong> Alarm_alerte</p>
+                  <p><strong>Template ID:</strong> template_bts_ticket</p>
+                  <p><strong>Status:</strong> ✅ Configuré automatiquement</p>
+                </div>
+              </div>
+
+              {/* Emails des équipes */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-gray-900 mb-3">
+                  Emails configurés pour les équipes
+                </h3>
+                <div className="space-y-2 text-sm text-gray-600">
+                  <div className="flex justify-between">
+                    <span>📧 Équipe IP:</span>
+                    <span className="font-medium">manuelmayi581@gmail.com</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>📧 Équipe Transmission:</span>
+                    <span className="font-medium">manuelmayi581@gmail.com</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>📧 Équipe BSS:</span>
+                    <span className="font-medium">manuelmayi581@gmail.com</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>📧 Équipe Power:</span>
+                    <span className="font-medium">manuelmayi581@gmail.com</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Fonctionnement automatique */}
+              <div className="bg-yellow-50 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-yellow-900 mb-2">
+                  🚀 Fonctionnement automatique
+                </h3>
+                <ul className="text-sm text-yellow-800 space-y-1 list-disc list-inside">
+                  <li>Les emails sont envoyés automatiquement à chaque nouvelle alarme</li>
+                  <li>Chaque équipe reçoit les notifications selon le type d'alarme</li>
+                  <li>Les mises à jour de tickets sont également notifiées par email</li>
+                  <li>Aucune configuration manuelle requise</li>
+                </ul>
               </div>
 
               {/* Résultat du test */}
               {testResult && (
                 <div className={`rounded-lg p-4 ${testResult.success ? 'bg-green-50' : 'bg-red-50'}`}>
                   <div className="flex items-center">
-                    {testResult.success ? (
-                      <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
-                    ) : (
-                      <AlertTriangle className="w-5 h-5 text-red-500 mr-2" />
-                    )}
+                    <CheckCircle className={`w-5 h-5 mr-2 ${testResult.success ? 'text-green-500' : 'text-red-500'}`} />
                     <p className={`text-sm ${testResult.success ? 'text-green-800' : 'text-red-800'}`}>
                       {testResult.message}
                     </p>
@@ -185,21 +144,13 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
                   {isTestingEmail ? 'Test en cours...' : 'Tester l\'email'}
                 </button>
 
-                <div className="flex space-x-3">
-                  <button
-                    onClick={onClose}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    onClick={handleSaveConfig}
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center"
-                  >
-                    <Settings className="w-4 h-4 mr-2" />
-                    Sauvegarder
-                  </button>
-                </div>
+                <button
+                  onClick={onClose}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center"
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Fermer
+                </button>
               </div>
             </div>
           </div>
