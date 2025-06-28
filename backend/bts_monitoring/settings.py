@@ -66,7 +66,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'bts_monitoring.wsgi.application'
 ASGI_APPLICATION = 'bts_monitoring.asgi.application'
 
-# Database
+# Database - Using SQLite for Windows compatibility
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -145,10 +145,10 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_CREDENTIALS = True
 
-# Channels
+# Channels - Using InMemory for Windows compatibility
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels.core.InMemoryChannelLayer',
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
     },
 }
 
@@ -162,7 +162,7 @@ CHANNEL_LAYERS = {
 #     },
 # }
 
-# Celery Configuration
+# Celery Configuration (optional - for background tasks)
 CELERY_BROKER_URL = config('REDIS_URL', default='redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = config('REDIS_URL', default='redis://localhost:6379/0')
 CELERY_ACCEPT_CONTENT = ['json']
@@ -182,6 +182,9 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID', default='')
 TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN', default='')
 TWILIO_PHONE_NUMBER = config('TWILIO_PHONE_NUMBER', default='')
+
+# Custom User Model
+AUTH_USER_MODEL = 'authentication.User'
 
 # Logging
 LOGGING = {
