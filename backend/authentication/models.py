@@ -27,8 +27,9 @@ class User(AbstractUser):
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['email']
     
+    # Fix the table name conflict by using a different table name
     class Meta:
-        db_table = 'auth_user'
+        db_table = 'custom_user'
         verbose_name = 'Utilisateur'
         verbose_name_plural = 'Utilisateurs'
     
