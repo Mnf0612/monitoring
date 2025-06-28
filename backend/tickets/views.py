@@ -2,23 +2,17 @@ from rest_framework import generics, status, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from django.db.models import Count, Q
-from .models import Team, Ticket, TicketUpdate
+from django.utils import timezone
+from .models import Ticket, TicketComment, TicketAttachment
 from .serializers import (
-    TeamSerializer, TicketSerializer, TicketCreateSerializer, 
-    TicketUpdateStatusSerializer, TicketUpdateSerializer
+    TicketSerializer, TicketCreateSerializer, 
+    TicketCommentSerializer, TicketAttachmentSerializer
 )
 
-class TeamListView(generics.ListCreateAPIView):
-    queryset = Team.objects.filter(is_active=True)
-    serializer_class = TeamSerializer
-    permission_classes = [permissions.IsAuthenticated]
 
 class TicketListCreateView(generics.ListCreateAPIView):
-    queryset = Ticket.objects.select_related('alarm', 'team', 'assigned_to').all()
+    queryset = Ticket.objects.all()
     permission_classes = [permissions.IsAuthenticated]
-    filterset_fields = ['team', 'status', 'priority', 'assigned_to']
-    search_fields = ['title', 'description', 'alarm__site__name']
-    ordering_fields = ['created_at', 'updated_at', 'priority']
     
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -26,147 +20,125 @@ class TicketListCreateView(generics.ListCreateAPIView):
         return TicketSerializer
     
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = Ticket.objects.all()
         
-        # Filter by user role and team
+        # Filter based on user role
         user = self.request.user
         if user.role == 'technician':
-            # Technicians can only see tickets assigned to them or their team
+            # Technicians only see tickets assigned to them or their team
             queryset = queryset.filter(
-                Q(assigned_to=user) | Q(team__type=user.team)
+                Q(assigned_to=user) | Q(team=user.team)
             )
-        elif user.role == 'operator':
-            # Operators can see all tickets but with some restrictions
-            pass
-        # Admins can see all tickets
         
+        # Additional filters
+        status_filter = self.request.query_params.get('status')
+        priority = self.request.query_params.get('priority')
+        assigned_to = self.request.query_params.get('assigned_to')
+        site = self.request.query_params.get('site')
+        
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        if priority:
+            queryset = queryset.filter(priority=priority)
+        if assigned_to:
+            queryset = queryset.filter(assigned_to__id=assigned_to)
+        if site:
+            queryset = queryset.filter(site__code=site)
+            
         return queryset
+    
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
 
 class TicketDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Ticket.objects.select_related('alarm', 'team', 'assigned_to').prefetch_related('updates', 'attachments').all()
+    queryset = Ticket.objects.all()
+    serializer_class = TicketSerializer
     permission_classes = [permissions.IsAuthenticated]
     
-    def get_serializer_class(self):
-        if self.request.method in ['PUT', 'PATCH']:
-            return TicketUpdateStatusSerializer
-        return TicketSerializer
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'technician':
+            return Ticket.objects.filter(
+                Q(assigned_to=user) | Q(team=user.team)
+            )
+        return Ticket.objects.all()
+
 
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
-def add_ticket_comment(request, ticket_id):
-    """Add a comment to a ticket"""
+def add_comment(request, ticket_id):
     try:
         ticket = Ticket.objects.get(id=ticket_id)
-        comment = request.data.get('comment', '')
         
-        if not comment:
-            return Response(
-                {'error': 'Le commentaire est requis'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        # Check permissions
+        user = request.user
+        if user.role == 'technician' and ticket.assigned_to != user and ticket.team != user.team:
+            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
         
-        # Create update record
-        update = TicketUpdate.objects.create(
-            ticket=ticket,
-            user=request.user,
-            comment=comment
-        )
-        
-        return Response(TicketUpdateSerializer(update).data)
+        serializer = TicketCommentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(ticket=ticket, user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
     except Ticket.DoesNotExist:
-        return Response(
-            {'error': 'Ticket non trouvé'}, 
-            status=status.HTTP_404_NOT_FOUND
-        )
+        return Response({'error': 'Ticket not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def add_attachment(request, ticket_id):
+    try:
+        ticket = Ticket.objects.get(id=ticket_id)
+        
+        # Check permissions
+        user = request.user
+        if user.role == 'technician' and ticket.assigned_to != user and ticket.team != user.team:
+            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = TicketAttachmentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(ticket=ticket, uploaded_by=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+    except Ticket.DoesNotExist:
+        return Response({'error': 'Ticket not found'}, status=status.HTTP_404_NOT_FOUND)
+
 
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
 def ticket_stats(request):
-    """Get ticket statistics"""
+    user = self.request.user
     
-    # Basic stats
-    total_tickets = Ticket.objects.count()
-    open_tickets = Ticket.objects.filter(status='open').count()
-    in_progress_tickets = Ticket.objects.filter(status='in_progress').count()
-    resolved_tickets = Ticket.objects.filter(status='resolved').count()
-    closed_tickets = Ticket.objects.filter(status='closed').count()
+    # Base queryset based on user role
+    if user.role == 'technician':
+        queryset = Ticket.objects.filter(
+            Q(assigned_to=user) | Q(team=user.team)
+        )
+    else:
+        queryset = Ticket.objects.all()
     
-    # Tickets by priority
-    tickets_by_priority = Ticket.objects.values('priority').annotate(
+    # Get counts by status
+    stats_by_status = queryset.values('status').annotate(
         count=Count('id')
-    ).order_by('-count')
+    ).order_by('status')
     
-    # Tickets by team
-    tickets_by_team = Ticket.objects.values('team__name').annotate(
-        count=Count('id'),
-        open=Count('id', filter=Q(status='open')),
-        in_progress=Count('id', filter=Q(status='in_progress')),
-        resolved=Count('id', filter=Q(status='resolved'))
-    ).order_by('-count')
+    # Get counts by priority
+    stats_by_priority = queryset.values('priority').annotate(
+        count=Count('id')
+    ).order_by('priority')
     
-    # Tickets by status over time (last 30 days)
-    from django.utils import timezone
-    from datetime import timedelta
-    
-    thirty_days_ago = timezone.now() - timedelta(days=30)
-    recent_tickets = Ticket.objects.filter(created_at__gte=thirty_days_ago)
+    # Recent tickets
+    recent_tickets = queryset.order_by('-created_at')[:5]
     
     return Response({
-        'total': total_tickets,
-        'open': open_tickets,
-        'in_progress': in_progress_tickets,
-        'resolved': resolved_tickets,
-        'closed': closed_tickets,
-        'by_priority': list(tickets_by_priority),
-        'by_team': list(tickets_by_team),
-        'recent_count': recent_tickets.count()
+        'total_tickets': queryset.count(),
+        'open_tickets': queryset.filter(status='open').count(),
+        'in_progress_tickets': queryset.filter(status='in_progress').count(),
+        'resolved_tickets': queryset.filter(status='resolved').count(),
+        'stats_by_status': list(stats_by_status),
+        'stats_by_priority': list(stats_by_priority),
+        'recent_tickets': TicketSerializer(recent_tickets, many=True).data
     })
-
-@api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
-def assign_ticket(request, ticket_id):
-    """Assign a ticket to a user"""
-    try:
-        ticket = Ticket.objects.get(id=ticket_id)
-        user_id = request.data.get('user_id')
-        
-        if user_id:
-            from django.contrib.auth import get_user_model
-            User = get_user_model()
-            try:
-                user = User.objects.get(id=user_id)
-                ticket.assigned_to = user
-                ticket.save()
-                
-                # Create update record
-                TicketUpdate.objects.create(
-                    ticket=ticket,
-                    user=request.user,
-                    comment=f"Ticket assigné à {user.username}"
-                )
-                
-                return Response({'message': f'Ticket assigné à {user.username}'})
-            except User.DoesNotExist:
-                return Response(
-                    {'error': 'Utilisateur non trouvé'}, 
-                    status=status.HTTP_404_NOT_FOUND
-                )
-        else:
-            # Unassign ticket
-            ticket.assigned_to = None
-            ticket.save()
-            
-            TicketUpdate.objects.create(
-                ticket=ticket,
-                user=request.user,
-                comment="Ticket désassigné"
-            )
-            
-            return Response({'message': 'Ticket désassigné'})
-            
-    except Ticket.DoesNotExist:
-        return Response(
-            {'error': 'Ticket non trouvé'}, 
-            status=status.HTTP_404_NOT_FOUND
-        )

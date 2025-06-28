@@ -1,10 +1,11 @@
 Django==4.2.7
 djangorestframework==3.14.0
 django-cors-headers==4.3.1
-python-decouple==3.8
+psycopg2-binary==2.9.7
+redis==5.0.1
 celery==5.3.4
-channels==4.0.0
-django-filter==23.3
+django-channels==4.0.0
+channels-redis==4.1.0
+python-decouple==3.8
 Pillow==10.1.0
-requests==2.31.0
-twilio==8.10.0
+django-extensions==3.2.3

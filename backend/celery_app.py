@@ -1,3 +1,7 @@
+"""
+Celery configuration for BTS Monitoring System
+"""
+
 import os
 from celery import Celery
 

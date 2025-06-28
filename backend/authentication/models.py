@@ -1,41 +1,43 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+
 class User(AbstractUser):
     ROLE_CHOICES = [
-        ('admin', 'Administrateur'),
-        ('operator', 'Opérateur'),
-        ('technician', 'Technicien'),
+        ('admin', 'Administrator'),
+        ('operator', 'Operator'),
+        ('technician', 'Technician'),
     ]
     
-    TEAM_CHOICES = [
-        ('power', 'Power'),
-        ('ip', 'IP'),
-        ('transmission', 'Transmission'),
-        ('bss', 'BSS'),
-    ]
-    
-    email = models.EmailField(unique=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='technician')
-    team = models.CharField(max_length=20, choices=TEAM_CHOICES, null=True, blank=True)
-    phone = models.CharField(max_length=20, null=True, blank=True)
+    phone = models.CharField(max_length=20, blank=True)
+    team = models.ForeignKey('Team', on_delete=models.SET_NULL, null=True, blank=True)
     is_active = models.BooleanField(default=True)
-    last_login_ip = models.GenericIPAddressField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
-    USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = ['email']
-    
-    # Fix the table name conflict by using a different table name
-    class Meta:
-        db_table = 'custom_user'
-        verbose_name = 'Utilisateur'
-        verbose_name_plural = 'Utilisateurs'
-    
+
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"
+
+
+class Team(models.Model):
+    TEAM_TYPES = [
+        ('power', 'Power Team'),
+        ('transmission', 'Transmission Team'),
+        ('bss', 'BSS Team'),
+        ('hardware', 'Hardware Team'),
+        ('security', 'Security Team'),
+        ('general', 'General Team'),
+    ]
     
-    @property
-    def full_name(self):
-        return f"{self.first_name} {self.last_name}".strip() or self.username
+    name = models.CharField(max_length=100)
+    team_type = models.CharField(max_length=20, choices=TEAM_TYPES)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ['name']

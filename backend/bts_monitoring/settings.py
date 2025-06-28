@@ -1,10 +1,18 @@
-import os
-from decouple import config
-from pathlib import Path
+"""
+Django settings for bts_monitoring project.
+"""
 
+from pathlib import Path
+from decouple import config
+import os
+
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-me-in-production')
+
+# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
@@ -23,7 +31,6 @@ THIRD_PARTY_APPS = [
     'rest_framework',
     'corsheaders',
     'channels',
-    'django_filters',
 ]
 
 LOCAL_APPS = [
@@ -66,25 +73,13 @@ TEMPLATES = [
 WSGI_APPLICATION = 'bts_monitoring.wsgi.application'
 ASGI_APPLICATION = 'bts_monitoring.asgi.application'
 
-# Database - Using SQLite for Windows compatibility
+# Database
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
-# For PostgreSQL (when you have it set up):
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': config('DB_NAME', default='bts_monitoring'),
-#         'USER': config('DB_USER', default='postgres'),
-#         'PASSWORD': config('DB_PASSWORD', default='password'),
-#         'HOST': config('DB_HOST', default='localhost'),
-#         'PORT': config('DB_PORT', default='5432'),
-#     }
-# }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -103,66 +98,54 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Internationalization
-LANGUAGE_CODE = 'fr-fr'
+LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Africa/Douala'
 USE_I18N = True
 USE_TZ = True
 
-# Static files
+# Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Media files
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = BASE_DIR / 'media'
 
+# Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# REST Framework
+# REST Framework configuration
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
-    'DEFAULT_FILTER_BACKENDS': [
-        'django_filters.rest_framework.DjangoFilterBackend',
-        'rest_framework.filters.SearchFilter',
-        'rest_framework.filters.OrderingFilter',
-    ],
 }
 
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
 
-# Channels - Using InMemory for Windows compatibility
+# Channels configuration
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
     },
 }
 
-# For Redis (when you have it set up):
-# CHANNEL_LAYERS = {
-#     'default': {
-#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
-#         'CONFIG': {
-#             "hosts": [config('REDIS_URL', default='redis://localhost:6379/0')],
-#         },
-#     },
-# }
-
-# Celery Configuration (optional - for background tasks)
+# Celery configuration
 CELERY_BROKER_URL = config('REDIS_URL', default='redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = config('REDIS_URL', default='redis://localhost:6379/0')
 CELERY_ACCEPT_CONTENT = ['json']
@@ -170,7 +153,7 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
-# Email Configuration
+# Email configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
@@ -178,15 +161,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 
-# Twilio Configuration
-TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID', default='')
-TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN', default='')
-TWILIO_PHONE_NUMBER = config('TWILIO_PHONE_NUMBER', default='')
-
-# Custom User Model
-AUTH_USER_MODEL = 'authentication.User'
-
-# Logging
+# Logging configuration
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -194,10 +169,10 @@ LOGGING = {
         'file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': 'bts_monitoring.log',
+            'filename': BASE_DIR / 'bts_monitoring.log',
         },
         'console': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
         },
     },
@@ -207,9 +182,9 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
-        'monitoring': {
+        'bts_monitoring': {
             'handlers': ['file', 'console'],
-            'level': 'INFO',
+            'level': 'DEBUG',
             'propagate': True,
         },
     },
