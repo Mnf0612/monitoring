@@ -33,12 +33,6 @@ export function LoginForm({ onLogin }: LoginFormProps) {
     }
   };
 
-  const demoAccounts = [
-    { username: 'admin', password: 'admin123', role: 'Administrateur' },
-    { username: 'operator1', password: 'operator123', role: 'Opérateur' },
-    { username: 'tech1', password: 'tech123', role: 'Technicien' }
-  ];
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 flex items-center justify-center px-4">
       <div className="max-w-md w-full space-y-8">
@@ -49,10 +43,18 @@ export function LoginForm({ onLogin }: LoginFormProps) {
           </div>
           <h2 className="text-3xl font-bold text-white">BTS Monitor</h2>
           <p className="mt-2 text-blue-200">Système de surveillance des sites BTS</p>
+          <p className="mt-4 text-sm text-blue-300">
+            Surveillance en temps réel • 50 sites • 10 régions du Cameroun
+          </p>
         </div>
 
         {/* Login Form */}
         <div className="bg-white rounded-lg shadow-xl p-8">
+          <div className="text-center mb-6">
+            <h3 className="text-xl font-semibold text-gray-900">Connexion Sécurisée</h3>
+            <p className="text-sm text-gray-600 mt-1">Accédez au tableau de bord de monitoring</p>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-md p-4 flex items-center">
@@ -110,33 +112,36 @@ export function LoginForm({ onLogin }: LoginFormProps) {
               {isLoading ? 'Connexion...' : 'Se connecter'}
             </button>
           </form>
+
+          {/* Security Notice */}
+          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center text-sm text-gray-600">
+              <Shield className="h-4 w-4 mr-2 text-gray-500" />
+              <span>Connexion sécurisée avec authentification multi-niveaux</span>
+            </div>
+          </div>
         </div>
 
-        {/* Demo Accounts */}
+        {/* System Info */}
         <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
-          <h3 className="text-white font-medium mb-4">Comptes de démonstration :</h3>
-          <div className="space-y-3">
-            {demoAccounts.map((account, index) => (
-              <div key={index} className="bg-white/20 rounded-md p-3">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-white font-medium">{account.role}</p>
-                    <p className="text-blue-200 text-sm">
-                      {account.username} / {account.password}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setUsername(account.username);
-                      setPassword(account.password);
-                    }}
-                    className="text-blue-200 hover:text-white text-sm underline"
-                  >
-                    Utiliser
-                  </button>
-                </div>
-              </div>
-            ))}
+          <h3 className="text-white font-medium mb-3">Système BTS Monitor</h3>
+          <div className="space-y-2 text-sm text-blue-200">
+            <div className="flex justify-between">
+              <span>Sites surveillés :</span>
+              <span className="font-medium">50 sites BTS</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Couverture :</span>
+              <span className="font-medium">10 régions</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Monitoring :</span>
+              <span className="font-medium text-green-300">24/7 en temps réel</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Notifications :</span>
+              <span className="font-medium text-green-300">Email + SMS automatiques</span>
+            </div>
           </div>
         </div>
       </div>

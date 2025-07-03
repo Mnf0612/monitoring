@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Mail, CheckCircle, Settings } from 'lucide-react';
+import { X, Mail, CheckCircle, Settings, Clock, BarChart3 } from 'lucide-react';
 import { emailService } from '../services/emailService';
 
 interface EmailConfigModalProps {
@@ -23,17 +23,19 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
         success: result,
         message: result 
           ? 'Email de test envoyé avec succès à manuelmayi581@gmail.com!' 
-          : 'Échec de l\'envoi de l\'email de test. Vérifiez votre connexion internet.'
+          : 'Échec de l\'envoi de l\'email de test. Vérifiez votre connexion internet ou attendez quelques minutes (limite de taux EmailJS).'
       });
     } catch (error) {
       setTestResult({
         success: false,
-        message: 'Erreur lors de l\'envoi de l\'email de test.'
+        message: 'Erreur lors de l\'envoi de l\'email de test. Vérifiez votre connexion internet.'
       });
     } finally {
       setIsTestingEmail(false);
     }
   };
+
+  const queueStats = emailService.getQueueStats();
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -71,15 +73,41 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
                 </p>
               </div>
 
-              {/* Informations de configuration */}
+              {/* Statistiques de la queue */}
               <div className="bg-blue-50 rounded-lg p-4">
-                <h3 className="text-sm font-medium text-blue-900 mb-2">
-                  Configuration intégrée
+                <h3 className="text-sm font-medium text-blue-900 mb-2 flex items-center">
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  Statistiques d'envoi
                 </h3>
                 <div className="text-sm text-blue-800 space-y-1">
+                  <div className="flex justify-between">
+                    <span>Emails en attente :</span>
+                    <span className="font-medium">{queueStats.pending}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Traitement en cours :</span>
+                    <span className={`font-medium ${queueStats.isProcessing ? 'text-green-600' : 'text-gray-600'}`}>
+                      {queueStats.isProcessing ? 'Oui' : 'Non'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Dernier envoi :</span>
+                    <span className="font-medium">{queueStats.lastEmailTime}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Informations de configuration */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-gray-900 mb-2">
+                  Configuration intégrée
+                </h3>
+                <div className="text-sm text-gray-600 space-y-1">
                   <p><strong>Service ID:</strong> Alarm_alerte</p>
                   <p><strong>Template ID:</strong> template_bts_ticket</p>
                   <p><strong>Status:</strong> ✅ Configuré automatiquement</p>
+                  <p><strong>Gestion des délais:</strong> ✅ 5 secondes minimum entre emails</p>
+                  <p><strong>Retry automatique:</strong> ✅ 3 tentatives max</p>
                 </div>
               </div>
 
@@ -110,13 +138,16 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
 
               {/* Fonctionnement automatique */}
               <div className="bg-yellow-50 rounded-lg p-4">
-                <h3 className="text-sm font-medium text-yellow-900 mb-2">
-                  🚀 Fonctionnement automatique
+                <h3 className="text-sm font-medium text-yellow-900 mb-2 flex items-center">
+                  <Clock className="w-4 h-4 mr-2" />
+                  🚀 Fonctionnement automatique avec gestion des délais
                 </h3>
                 <ul className="text-sm text-yellow-800 space-y-1 list-disc list-inside">
-                  <li>Les emails sont envoyés automatiquement à chaque nouvelle alarme</li>
+                  <li>Les emails sont mis en queue pour éviter la saturation</li>
+                  <li>Délai minimum de 5 secondes entre chaque envoi</li>
+                  <li>Retry automatique en cas d'erreur réseau (3 tentatives max)</li>
+                  <li>Backoff exponentiel en cas de limite de taux atteinte</li>
                   <li>Chaque équipe reçoit les notifications selon le type d'alarme</li>
-                  <li>Les mises à jour de tickets sont également notifiées par email</li>
                   <li>Aucune configuration manuelle requise</li>
                 </ul>
               </div>

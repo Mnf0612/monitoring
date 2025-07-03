@@ -13,10 +13,96 @@ class EmailService {
     power: 'manuelmayi581@gmail.com'
   };
 
+  // Gestion des délais pour éviter la saturation
+  private emailQueue: Array<() => Promise<void>> = [];
+  private isProcessingQueue = false;
+  private lastEmailTime = 0;
+  private minDelayBetweenEmails = 5000; // 5 secondes minimum entre les emails
+  private maxRetries = 3;
+
   constructor() {
     // Initialiser EmailJS automatiquement
     emailjs.init(this.publicKey);
     console.log('✅ EmailJS initialisé automatiquement avec la configuration');
+    
+    // Démarrer le processeur de queue
+    this.startQueueProcessor();
+  }
+
+  private async startQueueProcessor() {
+    if (this.isProcessingQueue) return;
+    
+    this.isProcessingQueue = true;
+    
+    while (this.emailQueue.length > 0) {
+      const emailTask = this.emailQueue.shift();
+      if (emailTask) {
+        // Vérifier le délai minimum
+        const now = Date.now();
+        const timeSinceLastEmail = now - this.lastEmailTime;
+        
+        if (timeSinceLastEmail < this.minDelayBetweenEmails) {
+          const waitTime = this.minDelayBetweenEmails - timeSinceLastEmail;
+          console.log(`⏳ Attente de ${waitTime}ms avant le prochain email pour éviter la saturation...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+        }
+        
+        try {
+          await emailTask();
+          this.lastEmailTime = Date.now();
+        } catch (error) {
+          console.error('❌ Erreur lors du traitement de l\'email en queue:', error);
+        }
+        
+        // Petite pause entre chaque email
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+    
+    this.isProcessingQueue = false;
+  }
+
+  private async sendEmailWithRetry(templateParams: any, retryCount = 0): Promise<boolean> {
+    try {
+      console.log(`📧 Tentative d'envoi ${retryCount + 1}/${this.maxRetries + 1}...`);
+      
+      const result = await emailjs.send(
+        this.serviceId,
+        this.templateId,
+        templateParams
+      );
+      
+      console.log(`✅ EMAIL ENVOYÉ AVEC SUCCÈS!`);
+      console.log(`📧 Status: ${result.status}`);
+      console.log(`📧 Text: ${result.text}`);
+      console.log(`⏰ Heure: ${new Date().toLocaleString('fr-FR')}`);
+      console.log('─'.repeat(50));
+      
+      return true;
+    } catch (error: any) {
+      console.error(`❌ Tentative ${retryCount + 1} échouée:`, error);
+      
+      // Vérifier le type d'erreur
+      if (error.status === 429 || error.text?.includes('rate limit')) {
+        console.log('🚫 Limite de taux atteinte, attente plus longue...');
+        if (retryCount < this.maxRetries) {
+          const waitTime = Math.pow(2, retryCount) * 10000; // Backoff exponentiel
+          console.log(`⏳ Attente de ${waitTime}ms avant nouvelle tentative...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          return this.sendEmailWithRetry(templateParams, retryCount + 1);
+        }
+      } else if (error.status === 0 || error.text?.includes('network')) {
+        console.log('🌐 Erreur réseau détectée');
+        if (retryCount < this.maxRetries) {
+          const waitTime = 3000 + (retryCount * 2000); // 3s, 5s, 7s
+          console.log(`⏳ Nouvelle tentative dans ${waitTime}ms...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          return this.sendEmailWithRetry(templateParams, retryCount + 1);
+        }
+      }
+      
+      return false;
+    }
   }
 
   async sendTicketNotification(team: string, ticketId: string, alarmMessage: string, site: string): Promise<boolean> {
@@ -42,30 +128,24 @@ class EmailService {
       subject: `🚨 NOUVEAU TICKET BTS #${ticketId} - ${site}`
     };
 
-    try {
-      console.log(`📧 Envoi d'email automatique en cours...`);
-      console.log(`📞 Destinataire: ${email}`);
-      console.log(`👥 Équipe: ${this.getTeamName(team)}`);
-      console.log(`🎫 Ticket: #${ticketId}`);
-      console.log(`🏢 Site: ${site}`);
+    console.log(`📧 Ajout d'email à la queue...`);
+    console.log(`📞 Destinataire: ${email}`);
+    console.log(`👥 Équipe: ${this.getTeamName(team)}`);
+    console.log(`🎫 Ticket: #${ticketId}`);
+    console.log(`🏢 Site: ${site}`);
+
+    // Ajouter à la queue au lieu d'envoyer immédiatement
+    return new Promise((resolve) => {
+      this.emailQueue.push(async () => {
+        const result = await this.sendEmailWithRetry(templateParams);
+        resolve(result);
+      });
       
-      const result = await emailjs.send(
-        this.serviceId,
-        this.templateId,
-        templateParams
-      );
-      
-      console.log(`✅ EMAIL AUTOMATIQUE ENVOYÉ AVEC SUCCÈS!`);
-      console.log(`📧 Status: ${result.status}`);
-      console.log(`📧 Text: ${result.text}`);
-      console.log(`⏰ Heure: ${new Date().toLocaleString('fr-FR')}`);
-      console.log('─'.repeat(50));
-      
-      return true;
-    } catch (error) {
-      console.error('❌ Échec d\'envoi email automatique:', error);
-      return false;
-    }
+      // Démarrer le processeur si nécessaire
+      if (!this.isProcessingQueue) {
+        this.startQueueProcessor();
+      }
+    });
   }
 
   async sendTicketUpdate(team: string, ticketId: string, status: string, updateMessage?: string): Promise<boolean> {
@@ -89,28 +169,22 @@ class EmailService {
       subject: `📋 MISE À JOUR TICKET #${ticketId} - ${this.getStatusText(status)}`
     };
 
-    try {
-      console.log(`📧 Envoi d'email de mise à jour automatique...`);
-      console.log(`📞 Destinataire: ${email}`);
-      console.log(`🎫 Ticket: #${ticketId}`);
-      console.log(`🔄 Nouveau statut: ${this.getStatusText(status)}`);
+    console.log(`📧 Ajout d'email de mise à jour à la queue...`);
+    console.log(`📞 Destinataire: ${email}`);
+    console.log(`🎫 Ticket: #${ticketId}`);
+    console.log(`🔄 Nouveau statut: ${this.getStatusText(status)}`);
+
+    // Ajouter à la queue
+    return new Promise((resolve) => {
+      this.emailQueue.push(async () => {
+        const result = await this.sendEmailWithRetry(templateParams);
+        resolve(result);
+      });
       
-      const result = await emailjs.send(
-        this.serviceId,
-        this.templateId,
-        templateParams
-      );
-      
-      console.log(`✅ EMAIL DE MISE À JOUR AUTOMATIQUE ENVOYÉ!`);
-      console.log(`📧 Status: ${result.status}`);
-      console.log(`⏰ Heure: ${new Date().toLocaleString('fr-FR')}`);
-      console.log('─'.repeat(50));
-      
-      return true;
-    } catch (error) {
-      console.error('❌ Échec d\'envoi email de mise à jour automatique:', error);
-      return false;
-    }
+      if (!this.isProcessingQueue) {
+        this.startQueueProcessor();
+      }
+    });
   }
 
   private getTeamName(teamType: string): string {
@@ -143,15 +217,29 @@ class EmailService {
     return 'BASSE';
   }
 
-  // Méthode pour tester l'envoi d'email
+  // Méthode pour tester l'envoi d'email avec gestion d'erreur améliorée
   async testEmail(team: string = 'ip'): Promise<boolean> {
     console.log(`🧪 Test d'envoi d'email automatique pour l'équipe ${team}...`);
-    return await this.sendTicketNotification(
-      team,
-      'TEST-001',
-      'Test de notification automatique - Alarme de test critique',
-      'BTS-TEST-001'
-    );
+    
+    try {
+      const result = await this.sendTicketNotification(
+        team,
+        'TEST-001',
+        'Test de notification automatique - Alarme de test critique',
+        'BTS-TEST-001'
+      );
+      
+      if (result) {
+        console.log('✅ Test d\'email réussi !');
+      } else {
+        console.log('❌ Test d\'email échoué - Vérifiez votre connexion internet');
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('❌ Erreur lors du test d\'email:', error);
+      return false;
+    }
   }
 
   // Méthode pour vérifier la configuration (toujours valide maintenant)
@@ -164,7 +252,16 @@ class EmailService {
 
   // Méthode pour obtenir le statut de la configuration
   getConfigurationStatus(): string {
-    return '✅ Configuration EmailJS intégrée et prête';
+    return `✅ Configuration EmailJS intégrée et prête (Queue: ${this.emailQueue.length} emails en attente)`;
+  }
+
+  // Méthode pour obtenir les statistiques de la queue
+  getQueueStats(): { pending: number; isProcessing: boolean; lastEmailTime: string } {
+    return {
+      pending: this.emailQueue.length,
+      isProcessing: this.isProcessingQueue,
+      lastEmailTime: this.lastEmailTime ? new Date(this.lastEmailTime).toLocaleString('fr-FR') : 'Jamais'
+    };
   }
 }
 
