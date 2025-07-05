@@ -7,10 +7,10 @@ class EmailService {
   private publicKey = 'enCPeU5Qt9qR3j9jl';
 
   private teamEmails = {
-    ip: 'manuelmayi581@gmail.com',
-    transmission: 'manuelmayi581@gmail.com',
-    bss: 'manuelmayi581@gmail.com',
-    power: 'manuelmayi581@gmail.com'
+    ip: 'operator.ip@mtn.cm',
+    transmission: 'tech.transmission@mtn.cm',
+    bss: 'tech.bss@mtn.cm',
+    power: 'tech.power@mtn.cm'
   };
 
   // Gestion des délais pour éviter la saturation
@@ -24,7 +24,7 @@ class EmailService {
   constructor() {
     // Initialiser EmailJS automatiquement
     emailjs.init(this.publicKey);
-    console.log('✅ EmailJS initialisé automatiquement avec la configuration');
+    console.log('✅ EmailJS initialisé automatiquement avec la configuration MTN');
     
     // Démarrer le processeur de queue
     this.startQueueProcessor();
@@ -120,6 +120,44 @@ class EmailService {
     }
   }
 
+  async sendVerificationCode(email: string, username: string, code: string): Promise<boolean> {
+    // Vérifier si le quota est atteint avant d'ajouter à la queue
+    if (this.quotaReached) {
+      console.error('🚫 Impossible d\'envoyer l\'email de vérification - Quota EmailJS atteint');
+      return false;
+    }
+
+    const templateParams = {
+      to_email: email,
+      to_name: username,
+      verification_code: code,
+      user_name: username,
+      expires_in: '10 minutes',
+      from_name: 'MTN Cameroon BTS Monitor',
+      subject: `🔐 Code de vérification MTN BTS - ${code}`,
+      company_name: 'MTN Cameroon',
+      system_name: 'BTS Monitor'
+    };
+
+    console.log(`📧 Ajout d'email de vérification à la queue...`);
+    console.log(`📞 Destinataire: ${email}`);
+    console.log(`👤 Utilisateur: ${username}`);
+    console.log(`🔐 Code: ${code}`);
+
+    // Ajouter à la queue au lieu d'envoyer immédiatement
+    return new Promise((resolve) => {
+      this.emailQueue.push(async () => {
+        const result = await this.sendEmailWithRetry(templateParams);
+        resolve(result);
+      });
+      
+      // Démarrer le processeur si nécessaire
+      if (!this.isProcessingQueue) {
+        this.startQueueProcessor();
+      }
+    });
+  }
+
   async sendTicketNotification(team: string, ticketId: string, alarmMessage: string, site: string): Promise<boolean> {
     // Vérifier si le quota est atteint avant d'ajouter à la queue
     if (this.quotaReached) {
@@ -145,8 +183,9 @@ class EmailService {
       created_date: new Date().toLocaleString('fr-FR'),
       priority: this.getPriorityFromMessage(alarmMessage),
       dashboard_url: window.location.origin,
-      from_name: 'BTS Monitor System',
-      subject: `🚨 NOUVEAU TICKET BTS #${ticketId} - ${site}`
+      from_name: 'MTN Cameroon BTS Monitor',
+      subject: `🚨 NOUVEAU TICKET BTS #${ticketId} - ${site}`,
+      company_name: 'MTN Cameroon'
     };
 
     console.log(`📧 Ajout d'email à la queue...`);
@@ -192,8 +231,9 @@ class EmailService {
       update_message: updateMessage || 'Statut mis à jour',
       updated_date: new Date().toLocaleString('fr-FR'),
       dashboard_url: window.location.origin,
-      from_name: 'BTS Monitor System',
-      subject: `📋 MISE À JOUR TICKET #${ticketId} - ${this.getStatusText(status)}`
+      from_name: 'MTN Cameroon BTS Monitor',
+      subject: `📋 MISE À JOUR TICKET #${ticketId} - ${this.getStatusText(status)}`,
+      company_name: 'MTN Cameroon'
     };
 
     console.log(`📧 Ajout d'email de mise à jour à la queue...`);
@@ -216,12 +256,12 @@ class EmailService {
 
   private getTeamName(teamType: string): string {
     const teamNames = {
-      ip: 'Équipe IP',
-      transmission: 'Équipe Transmission',
-      bss: 'Équipe BSS',
-      power: 'Équipe Power'
+      ip: 'Équipe IP MTN',
+      transmission: 'Équipe Transmission MTN',
+      bss: 'Équipe BSS MTN',
+      power: 'Équipe Power MTN'
     };
-    return teamNames[teamType as keyof typeof teamNames] || 'Équipe Inconnue';
+    return teamNames[teamType as keyof typeof teamNames] || 'Équipe MTN';
   }
 
   private getStatusText(status: string): string {
@@ -291,9 +331,9 @@ class EmailService {
   // Méthode pour obtenir le statut de la configuration
   getConfigurationStatus(): string {
     if (this.quotaReached) {
-      return `🚫 Configuration EmailJS - QUOTA ATTEINT (Queue: ${this.emailQueue.length} emails en attente)`;
+      return `🚫 Configuration EmailJS MTN - QUOTA ATTEINT (Queue: ${this.emailQueue.length} emails en attente)`;
     }
-    return `✅ Configuration EmailJS intégrée et prête (Queue: ${this.emailQueue.length} emails en attente)`;
+    return `✅ Configuration EmailJS MTN intégrée et prête (Queue: ${this.emailQueue.length} emails en attente)`;
   }
 
   // Méthode pour obtenir les statistiques de la queue

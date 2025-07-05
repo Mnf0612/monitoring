@@ -7,6 +7,7 @@ export interface User {
   isActive: boolean;
   createdAt: string;
   lastLogin?: string;
+  emailVerified: boolean;
 }
 
 export interface AuthState {

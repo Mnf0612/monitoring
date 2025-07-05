@@ -1,37 +1,62 @@
 import { User, AuthState } from '../types';
+import { emailService } from './emailService';
 
 class AuthService {
   private users: User[] = [
     {
       id: '1',
       username: 'admin',
-      email: 'admin@btsmonitor.com',
+      email: 'admin@mtn.cm',
       role: 'admin',
       isActive: true,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      emailVerified: true
     },
     {
       id: '2',
       username: 'operator1',
-      email: 'operator@btsmonitor.com',
+      email: 'operator.ip@mtn.cm',
       role: 'operator',
       team: 'ip',
       isActive: true,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      emailVerified: true
     },
     {
       id: '3',
       username: 'tech1',
-      email: 'tech@btsmonitor.com',
+      email: 'tech.power@mtn.cm',
       role: 'technician',
       team: 'power',
       isActive: true,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      emailVerified: true
+    },
+    {
+      id: '4',
+      username: 'tech2',
+      email: 'tech.transmission@mtn.cm',
+      role: 'technician',
+      team: 'transmission',
+      isActive: true,
+      createdAt: new Date().toISOString(),
+      emailVerified: true
+    },
+    {
+      id: '5',
+      username: 'tech3',
+      email: 'tech.bss@mtn.cm',
+      role: 'technician',
+      team: 'bss',
+      isActive: true,
+      createdAt: new Date().toISOString(),
+      emailVerified: true
     }
   ];
 
   private currentUser: User | null = null;
   private authListeners: ((authState: AuthState) => void)[] = [];
+  private pendingVerification: { user: User; code: string; expiresAt: number } | null = null;
 
   constructor() {
     // Check for stored auth state
@@ -46,31 +71,102 @@ class AuthService {
     }
   }
 
-  async login(username: string, password: string): Promise<{ success: boolean; error?: string }> {
+  private generateVerificationCode(): string {
+    return Math.random().toString(36).substr(2, 6).toUpperCase();
+  }
+
+  private async sendVerificationEmail(user: User, code: string): Promise<boolean> {
+    try {
+      // Use the existing email service to send verification code
+      const templateParams = {
+        to_email: user.email,
+        to_name: user.username,
+        verification_code: code,
+        user_name: user.username,
+        expires_in: '10 minutes',
+        from_name: 'MTN Cameroon BTS Monitor',
+        subject: `🔐 Code de vérification MTN BTS - ${code}`
+      };
+
+      console.log(`📧 Envoi du code de vérification à ${user.email}`);
+      console.log(`🔐 Code: ${code}`);
+      console.log(`👤 Utilisateur: ${user.username}`);
+      console.log(`⏰ Expire dans 10 minutes`);
+
+      // For demo purposes, we'll simulate email sending
+      // In production, you would use the actual email service
+      return true;
+    } catch (error) {
+      console.error('❌ Erreur lors de l\'envoi du code de vérification:', error);
+      return false;
+    }
+  }
+
+  async login(username: string, password: string): Promise<{ success: boolean; error?: string; requiresVerification?: boolean }> {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Simple password validation (in production, use proper hashing)
+    // Simple password validation
     const user = this.users.find(u => u.username === username && u.isActive);
     
     if (!user) {
       return { success: false, error: 'Utilisateur non trouvé ou inactif' };
     }
 
-    // Simple password check (in production, use proper authentication)
+    // Simple password check
     const validPasswords: Record<string, string> = {
       'admin': 'admin123',
       'operator1': 'operator123',
-      'tech1': 'tech123'
+      'tech1': 'tech123',
+      'tech2': 'tech123',
+      'tech3': 'tech123'
     };
 
     if (validPasswords[username] !== password) {
       return { success: false, error: 'Mot de passe incorrect' };
     }
 
-    // Update last login
+    // Generate and send verification code
+    const verificationCode = this.generateVerificationCode();
+    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    this.pendingVerification = {
+      user,
+      code: verificationCode,
+      expiresAt
+    };
+
+    const emailSent = await this.sendVerificationEmail(user, verificationCode);
+    
+    if (!emailSent) {
+      return { success: false, error: 'Erreur lors de l\'envoi du code de vérification' };
+    }
+
+    console.log(`✅ Code de vérification envoyé à ${user.email}`);
+    console.log(`🔐 Code pour test: ${verificationCode}`);
+    
+    return { success: true, requiresVerification: true };
+  }
+
+  async verifyCode(code: string): Promise<{ success: boolean; error?: string }> {
+    if (!this.pendingVerification) {
+      return { success: false, error: 'Aucune vérification en cours' };
+    }
+
+    if (Date.now() > this.pendingVerification.expiresAt) {
+      this.pendingVerification = null;
+      return { success: false, error: 'Code de vérification expiré' };
+    }
+
+    if (code.toUpperCase() !== this.pendingVerification.code) {
+      return { success: false, error: 'Code de vérification incorrect' };
+    }
+
+    // Verification successful
+    const user = this.pendingVerification.user;
     user.lastLogin = new Date().toISOString();
     this.currentUser = user;
+    this.pendingVerification = null;
     
     // Store in localStorage
     localStorage.setItem('bts_auth_user', JSON.stringify(user));
@@ -84,6 +180,7 @@ class AuthService {
 
   logout(): void {
     this.currentUser = null;
+    this.pendingVerification = null;
     localStorage.removeItem('bts_auth_user');
     this.notifyListeners();
     console.log('👋 Déconnexion réussie');
@@ -121,7 +218,7 @@ class AuthService {
     return this.users;
   }
 
-  createUser(userData: Omit<User, 'id' | 'createdAt'>): User {
+  createUser(userData: Omit<User, 'id' | 'createdAt' | 'emailVerified'>): User {
     if (!this.hasRole('admin')) {
       throw new Error('Accès non autorisé');
     }
@@ -129,7 +226,8 @@ class AuthService {
     const newUser: User = {
       ...userData,
       id: Date.now().toString(),
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      emailVerified: false
     };
 
     this.users.push(newUser);
@@ -164,6 +262,38 @@ class AuthService {
     console.log(`👤 Utilisateur supprimé: ${deletedUser.username}`);
     
     return true;
+  }
+
+  // Get pending verification info (for UI)
+  getPendingVerification(): { email: string; expiresAt: number } | null {
+    if (!this.pendingVerification) return null;
+    
+    return {
+      email: this.pendingVerification.user.email,
+      expiresAt: this.pendingVerification.expiresAt
+    };
+  }
+
+  // Resend verification code
+  async resendVerificationCode(): Promise<{ success: boolean; error?: string }> {
+    if (!this.pendingVerification) {
+      return { success: false, error: 'Aucune vérification en cours' };
+    }
+
+    const newCode = this.generateVerificationCode();
+    const newExpiresAt = Date.now() + 10 * 60 * 1000;
+
+    this.pendingVerification.code = newCode;
+    this.pendingVerification.expiresAt = newExpiresAt;
+
+    const emailSent = await this.sendVerificationEmail(this.pendingVerification.user, newCode);
+    
+    if (!emailSent) {
+      return { success: false, error: 'Erreur lors de l\'envoi du code' };
+    }
+
+    console.log(`🔄 Nouveau code envoyé: ${newCode}`);
+    return { success: true };
   }
 
   // Auth state management
