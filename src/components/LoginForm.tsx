@@ -98,11 +98,16 @@ export function LoginForm({ onLogin }: LoginFormProps) {
       </div>
 
       <div className="max-w-md w-full space-y-8 relative z-10">
-        {/* Header */}
+        {/* Header with MTN Logo */}
         <div className="text-center">
-          <div className="mx-auto h-20 w-20 bg-white rounded-full flex items-center justify-center mb-4 shadow-lg">
-            <Shield className="h-10 w-10 text-yellow-600" />
+          {/* MTN Logo Container */}
+          <div className="mx-auto h-24 w-24 bg-white rounded-full flex items-center justify-center mb-6 shadow-2xl border-4 border-yellow-300">
+            <div className="text-center">
+              <div className="text-yellow-600 font-black text-2xl leading-none">MTN</div>
+              <div className="text-yellow-500 text-xs font-bold tracking-wider">CAMEROON</div>
+            </div>
           </div>
+          
           <div className="mb-4">
             <h1 className="text-4xl font-bold text-white mb-2">MTN Cameroon</h1>
             <h2 className="text-2xl font-semibold text-yellow-100">BTS Monitor</h2>
@@ -118,8 +123,11 @@ export function LoginForm({ onLogin }: LoginFormProps) {
           {step === 'login' ? (
             <>
               <div className="text-center mb-6">
-                <h3 className="text-xl font-semibold text-gray-900">Connexion Sécurisée</h3>
-                <p className="text-sm text-gray-600 mt-1">Accédez au tableau de bord de monitoring</p>
+                <div className="flex items-center justify-center mb-4">
+                  <Shield className="h-8 w-8 text-yellow-600 mr-2" />
+                  <h3 className="text-xl font-semibold text-gray-900">Connexion Sécurisée</h3>
+                </div>
+                <p className="text-sm text-gray-600">Accédez au tableau de bord de monitoring MTN</p>
               </div>
 
               <form onSubmit={handleLogin} className="space-y-6">
@@ -174,7 +182,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-yellow-600 text-white py-3 px-4 rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="w-full bg-yellow-600 text-white py-3 px-4 rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
                 >
                   {isLoading ? 'Connexion...' : 'Se connecter'}
                 </button>
@@ -183,7 +191,9 @@ export function LoginForm({ onLogin }: LoginFormProps) {
           ) : (
             <>
               <div className="text-center mb-6">
-                <Mail className="mx-auto h-12 w-12 text-yellow-600 mb-4" />
+                <div className="mx-auto h-16 w-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+                  <Mail className="h-8 w-8 text-yellow-600" />
+                </div>
                 <h3 className="text-xl font-semibold text-gray-900">Vérification par Email</h3>
                 <p className="text-sm text-gray-600 mt-1">
                   Un code de vérification a été envoyé à
@@ -238,7 +248,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                   <button
                     type="submit"
                     disabled={isLoading || verificationCode.length !== 6}
-                    className="w-full bg-yellow-600 text-white py-3 px-4 rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="w-full bg-yellow-600 text-white py-3 px-4 rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
                   >
                     {isLoading ? 'Vérification...' : 'Vérifier le code'}
                   </button>
@@ -250,7 +260,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                       setError('');
                       setVerificationCode('');
                     }}
-                    className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+                    className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors font-medium"
                   >
                     Retour à la connexion
                   </button>
@@ -260,17 +270,22 @@ export function LoginForm({ onLogin }: LoginFormProps) {
           )}
 
           {/* Security Notice */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-center text-sm text-gray-600">
-              <Shield className="h-4 w-4 mr-2 text-gray-500" />
-              <span>Connexion sécurisée avec authentification double facteur</span>
+          <div className="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+            <div className="flex items-center text-sm text-yellow-800">
+              <Shield className="h-4 w-4 mr-2 text-yellow-600" />
+              <span>Connexion sécurisée MTN avec authentification double facteur</span>
             </div>
           </div>
         </div>
 
         {/* MTN System Info */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
-          <h3 className="text-white font-medium mb-3">MTN Cameroon BTS Monitor</h3>
+        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 border border-white/20">
+          <div className="flex items-center mb-3">
+            <div className="h-8 w-8 bg-white rounded-full flex items-center justify-center mr-3">
+              <div className="text-yellow-600 font-black text-xs">MTN</div>
+            </div>
+            <h3 className="text-white font-medium">MTN Cameroon BTS Monitor</h3>
+          </div>
           <div className="space-y-2 text-sm text-yellow-100">
             <div className="flex justify-between">
               <span>Sites surveillés :</span>
@@ -296,10 +311,15 @@ export function LoginForm({ onLogin }: LoginFormProps) {
         </div>
 
         {/* Demo Credentials */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-          <h4 className="text-white font-medium mb-2 text-sm">Comptes de démonstration :</h4>
+        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+          <h4 className="text-white font-medium mb-2 text-sm flex items-center">
+            <div className="h-4 w-4 bg-white rounded-full flex items-center justify-center mr-2">
+              <div className="text-yellow-600 font-black text-xs">M</div>
+            </div>
+            Comptes de démonstration MTN :
+          </h4>
           <div className="space-y-1 text-xs text-yellow-100">
-            <div>👑 <strong>admin</strong> / admin123 (Administrateur)</div>
+            <div>👑 <strong>admin</strong> / admin123 (Administrateur MTN)</div>
             <div>👨‍💼 <strong>operator1</strong> / operator123 (Opérateur IP)</div>
             <div>🔧 <strong>tech1</strong> / tech123 (Technicien Power)</div>
             <div>📡 <strong>tech2</strong> / tech123 (Technicien Transmission)</div>
