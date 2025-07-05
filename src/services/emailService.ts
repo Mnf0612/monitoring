@@ -19,6 +19,7 @@ class EmailService {
   private lastEmailTime = 0;
   private minDelayBetweenEmails = 5000; // 5 secondes minimum entre les emails
   private maxRetries = 3;
+  private quotaReached = false; // Flag pour indiquer si le quota est atteint
 
   constructor() {
     // Initialiser EmailJS automatiquement
@@ -35,6 +36,12 @@ class EmailService {
     this.isProcessingQueue = true;
     
     while (this.emailQueue.length > 0) {
+      // Vérifier si le quota est atteint
+      if (this.quotaReached) {
+        console.log('🚫 Quota EmailJS atteint - Arrêt du traitement de la queue');
+        break;
+      }
+
       const emailTask = this.emailQueue.shift();
       if (emailTask) {
         // Vérifier le délai minimum
@@ -82,7 +89,15 @@ class EmailService {
     } catch (error: any) {
       console.error(`❌ Tentative ${retryCount + 1} échouée:`, error);
       
-      // Vérifier le type d'erreur
+      // Vérifier si le quota EmailJS est atteint (status 426)
+      if (error.status === 426) {
+        console.error('🚫 QUOTA EMAILJS ATTEINT - Impossible d\'envoyer plus d\'emails');
+        console.error('💡 Veuillez attendre la réinitialisation du quota ou upgrader votre plan EmailJS');
+        this.quotaReached = true;
+        return false;
+      }
+      
+      // Vérifier le type d'erreur pour les autres cas
       if (error.status === 429 || error.text?.includes('rate limit')) {
         console.log('🚫 Limite de taux atteinte, attente plus longue...');
         if (retryCount < this.maxRetries) {
@@ -106,6 +121,12 @@ class EmailService {
   }
 
   async sendTicketNotification(team: string, ticketId: string, alarmMessage: string, site: string): Promise<boolean> {
+    // Vérifier si le quota est atteint avant d'ajouter à la queue
+    if (this.quotaReached) {
+      console.error('🚫 Impossible d\'envoyer l\'email - Quota EmailJS atteint');
+      return false;
+    }
+
     const email = this.teamEmails[team as keyof typeof this.teamEmails];
     
     if (!email) {
@@ -149,6 +170,12 @@ class EmailService {
   }
 
   async sendTicketUpdate(team: string, ticketId: string, status: string, updateMessage?: string): Promise<boolean> {
+    // Vérifier si le quota est atteint avant d'ajouter à la queue
+    if (this.quotaReached) {
+      console.error('🚫 Impossible d\'envoyer l\'email de mise à jour - Quota EmailJS atteint');
+      return false;
+    }
+
     const email = this.teamEmails[team as keyof typeof this.teamEmails];
     
     if (!email) {
@@ -221,6 +248,11 @@ class EmailService {
   async testEmail(team: string = 'ip'): Promise<boolean> {
     console.log(`🧪 Test d'envoi d'email automatique pour l'équipe ${team}...`);
     
+    if (this.quotaReached) {
+      console.error('🚫 Impossible de tester l\'email - Quota EmailJS atteint');
+      return false;
+    }
+    
     try {
       const result = await this.sendTicketNotification(
         team,
@@ -232,7 +264,7 @@ class EmailService {
       if (result) {
         console.log('✅ Test d\'email réussi !');
       } else {
-        console.log('❌ Test d\'email échoué - Vérifiez votre connexion internet');
+        console.log('❌ Test d\'email échoué - Vérifiez votre connexion internet ou le quota EmailJS');
       }
       
       return result;
@@ -244,24 +276,40 @@ class EmailService {
 
   // Méthode pour vérifier la configuration (toujours valide maintenant)
   checkConfiguration(): { isValid: boolean; issues: string[] } {
+    const issues: string[] = [];
+    
+    if (this.quotaReached) {
+      issues.push('Quota EmailJS atteint - Impossible d\'envoyer des emails');
+    }
+    
     return {
-      isValid: true,
-      issues: []
+      isValid: !this.quotaReached,
+      issues
     };
   }
 
   // Méthode pour obtenir le statut de la configuration
   getConfigurationStatus(): string {
+    if (this.quotaReached) {
+      return `🚫 Configuration EmailJS - QUOTA ATTEINT (Queue: ${this.emailQueue.length} emails en attente)`;
+    }
     return `✅ Configuration EmailJS intégrée et prête (Queue: ${this.emailQueue.length} emails en attente)`;
   }
 
   // Méthode pour obtenir les statistiques de la queue
-  getQueueStats(): { pending: number; isProcessing: boolean; lastEmailTime: string } {
+  getQueueStats(): { pending: number; isProcessing: boolean; lastEmailTime: string; quotaReached: boolean } {
     return {
       pending: this.emailQueue.length,
       isProcessing: this.isProcessingQueue,
-      lastEmailTime: this.lastEmailTime ? new Date(this.lastEmailTime).toLocaleString('fr-FR') : 'Jamais'
+      lastEmailTime: this.lastEmailTime ? new Date(this.lastEmailTime).toLocaleString('fr-FR') : 'Jamais',
+      quotaReached: this.quotaReached
     };
+  }
+
+  // Méthode pour réinitialiser le flag de quota (utile pour les tests ou après upgrade du plan)
+  resetQuotaFlag(): void {
+    this.quotaReached = false;
+    console.log('✅ Flag de quota EmailJS réinitialisé');
   }
 }
 
