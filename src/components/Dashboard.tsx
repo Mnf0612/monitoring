@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { AlarmPanel } from './AlarmPanel';
 import { StatsCards } from './StatsCards';
 import { RegionChart } from './RegionChart';
 import { AlarmChart } from './AlarmChart';
 import { TopImpactedSites } from './TopImpactedSites';
+import { RegionSitesView } from './RegionSitesView';
 import { alarmService } from '../services/alarmService';
 import { DashboardStats } from '../types';
 import { Activity, Zap, AlertTriangle, CheckCircle } from 'lucide-react';
@@ -109,15 +109,13 @@ export function Dashboard() {
         </div>
 
         <div className="mt-8">
-          <AlarmPanel 
+          <RegionSitesView 
             key={refreshKey}
-            alarms={selectedRegion === 'all' 
-              ? alarmService.getAlarms() 
-              : alarmService.getAlarmsByRegion(selectedRegion)
-            }
-            regions={regions}
+            sites={alarmService.getSites()}
+            alarms={alarmService.getAlarms()}
             selectedRegion={selectedRegion}
             onRegionChange={setSelectedRegion}
+            regions={regions}
           />
         </div>
       </div>
