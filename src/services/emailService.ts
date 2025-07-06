@@ -87,12 +87,12 @@ class EmailService {
       
       return true;
     } catch (error: any) {
-      console.error(`❌ Tentative ${retryCount + 1} échouée:`, error);
+      console.log(`⚠️ Tentative ${retryCount + 1} échouée:`, error);
       
       // Vérifier si le quota EmailJS est atteint (status 426)
       if (error.status === 426) {
-        console.error('🚫 QUOTA EMAILJS ATTEINT - Impossible d\'envoyer plus d\'emails');
-        console.error('💡 Veuillez attendre la réinitialisation du quota ou upgrader votre plan EmailJS');
+        console.log('🚫 QUOTA EMAILJS ATTEINT - Impossible d\'envoyer plus d\'emails');
+        console.log('💡 Veuillez attendre la réinitialisation du quota ou upgrader votre plan EmailJS');
         this.quotaReached = true;
         return false;
       }
@@ -123,7 +123,7 @@ class EmailService {
   async sendVerificationCode(email: string, username: string, code: string): Promise<boolean> {
     // Vérifier si le quota est atteint avant d'ajouter à la queue
     if (this.quotaReached) {
-      console.error('🚫 Impossible d\'envoyer l\'email de vérification - Quota EmailJS atteint');
+      console.log('🚫 Impossible d\'envoyer l\'email de vérification - Quota EmailJS atteint');
       return false;
     }
 
@@ -161,7 +161,7 @@ class EmailService {
   async sendTicketNotification(team: string, ticketId: string, alarmMessage: string, site: string): Promise<boolean> {
     // Vérifier si le quota est atteint avant d'ajouter à la queue
     if (this.quotaReached) {
-      console.error('🚫 Impossible d\'envoyer l\'email - Quota EmailJS atteint');
+      console.log('🚫 Impossible d\'envoyer l\'email - Quota EmailJS atteint');
       return false;
     }
 
@@ -211,7 +211,7 @@ class EmailService {
   async sendTicketUpdate(team: string, ticketId: string, status: string, updateMessage?: string): Promise<boolean> {
     // Vérifier si le quota est atteint avant d'ajouter à la queue
     if (this.quotaReached) {
-      console.error('🚫 Impossible d\'envoyer l\'email de mise à jour - Quota EmailJS atteint');
+      console.log('🚫 Impossible d\'envoyer l\'email de mise à jour - Quota EmailJS atteint');
       return false;
     }
 
@@ -289,7 +289,7 @@ class EmailService {
     console.log(`🧪 Test d'envoi d'email automatique pour l'équipe ${team}...`);
     
     if (this.quotaReached) {
-      console.error('🚫 Impossible de tester l\'email - Quota EmailJS atteint');
+      console.log('🚫 Impossible de tester l\'email - Quota EmailJS atteint');
       return false;
     }
     
