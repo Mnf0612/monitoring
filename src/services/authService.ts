@@ -56,7 +56,7 @@ class AuthService {
 
   private currentUser: User | null = null;
   private authListeners: ((authState: AuthState) => void)[] = [];
-  private pendingVerification: { user: User; code: string; expiresAt: number } | null = null;
+  private pendingVerification: { user: User; code: string; expiresAt: number; email: string } | null = null;
 
   constructor() {
     // Check for stored auth state
@@ -73,33 +73,6 @@ class AuthService {
 
   private generateVerificationCode(): string {
     return Math.random().toString(36).substr(2, 6).toUpperCase();
-  }
-
-  private async sendVerificationEmail(user: User, code: string): Promise<boolean> {
-    try {
-      // Use the existing email service to send verification code
-      const templateParams = {
-        to_email: user.email,
-        to_name: user.username,
-        verification_code: code,
-        user_name: user.username,
-        expires_in: '10 minutes',
-        from_name: 'MTN Cameroon BTS Monitor',
-        subject: `🔐 Code de vérification MTN BTS - ${code}`
-      };
-
-      console.log(`📧 Envoi du code de vérification à ${user.email}`);
-      console.log(`🔐 Code: ${code}`);
-      console.log(`👤 Utilisateur: ${user.username}`);
-      console.log(`⏰ Expire dans 10 minutes`);
-
-      // For demo purposes, we'll simulate email sending
-      // In production, you would use the actual email service
-      return true;
-    } catch (error) {
-      console.error('❌ Erreur lors de l\'envoi du code de vérification:', error);
-      return false;
-    }
   }
 
   async login(username: string, password: string): Promise<{ success: boolean; error?: string; requiresVerification?: boolean }> {
@@ -126,26 +99,56 @@ class AuthService {
       return { success: false, error: 'Mot de passe incorrect' };
     }
 
+    // Store user for verification step
+    this.pendingVerification = {
+      user,
+      code: '',
+      expiresAt: 0,
+      email: ''
+    };
+
+    return { success: true, requiresVerification: true };
+  }
+
+  async sendVerificationCode(email: string): Promise<{ success: boolean; error?: string }> {
+    if (!this.pendingVerification) {
+      return { success: false, error: 'Aucune session de connexion en cours' };
+    }
+
     // Generate and send verification code
     const verificationCode = this.generateVerificationCode();
     const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-    this.pendingVerification = {
-      user,
-      code: verificationCode,
-      expiresAt
-    };
+    this.pendingVerification.code = verificationCode;
+    this.pendingVerification.expiresAt = expiresAt;
+    this.pendingVerification.email = email;
 
-    const emailSent = await this.sendVerificationEmail(user, verificationCode);
+    const emailSent = await this.sendVerificationEmail(email, this.pendingVerification.user.username, verificationCode);
     
     if (!emailSent) {
       return { success: false, error: 'Erreur lors de l\'envoi du code de vérification' };
     }
 
-    console.log(`✅ Code de vérification envoyé à ${user.email}`);
+    console.log(`✅ Code de vérification envoyé à ${email}`);
     console.log(`🔐 Code pour test: ${verificationCode}`);
     
-    return { success: true, requiresVerification: true };
+    return { success: true };
+  }
+
+  private async sendVerificationEmail(email: string, username: string, code: string): Promise<boolean> {
+    try {
+      console.log(`📧 Envoi du code de vérification à ${email}`);
+      console.log(`🔐 Code: ${code}`);
+      console.log(`👤 Utilisateur: ${username}`);
+      console.log(`⏰ Expire dans 10 minutes`);
+
+      // For demo purposes, we'll simulate email sending
+      // In production, you would use the actual email service
+      return true;
+    } catch (error) {
+      console.error('❌ Erreur lors de l\'envoi du code de vérification:', error);
+      return false;
+    }
   }
 
   async verifyCode(code: string): Promise<{ success: boolean; error?: string }> {
@@ -269,7 +272,7 @@ class AuthService {
     if (!this.pendingVerification) return null;
     
     return {
-      email: this.pendingVerification.user.email,
+      email: this.pendingVerification.email,
       expiresAt: this.pendingVerification.expiresAt
     };
   }
@@ -286,7 +289,11 @@ class AuthService {
     this.pendingVerification.code = newCode;
     this.pendingVerification.expiresAt = newExpiresAt;
 
-    const emailSent = await this.sendVerificationEmail(this.pendingVerification.user, newCode);
+    const emailSent = await this.sendVerificationEmail(
+      this.pendingVerification.email, 
+      this.pendingVerification.user.username, 
+      newCode
+    );
     
     if (!emailSent) {
       return { success: false, error: 'Erreur lors de l\'envoi du code' };

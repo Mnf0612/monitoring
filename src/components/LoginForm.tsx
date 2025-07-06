@@ -7,9 +7,10 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onLogin }: LoginFormProps) {
-  const [step, setStep] = useState<'login' | 'verification'>('login');
+  const [step, setStep] = useState<'login' | 'email' | 'verification'>('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -25,9 +26,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
       const result = await authService.login(username, password);
       
       if (result.success && result.requiresVerification) {
-        const verification = authService.getPendingVerification();
-        setPendingVerification(verification);
-        setStep('verification');
+        setStep('email');
       } else if (result.success) {
         onLogin();
       } else {
@@ -35,6 +34,28 @@ export function LoginForm({ onLogin }: LoginFormProps) {
       }
     } catch (error) {
       setError('Erreur de connexion. Veuillez réessayer.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const result = await authService.sendVerificationCode(email);
+      
+      if (result.success) {
+        const verification = authService.getPendingVerification();
+        setPendingVerification(verification);
+        setStep('verification');
+      } else {
+        setError(result.error || 'Erreur lors de l\'envoi du code');
+      }
+    } catch (error) {
+      setError('Erreur lors de l\'envoi du code. Veuillez réessayer.');
     } finally {
       setIsLoading(false);
     }
@@ -118,7 +139,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
           </p>
         </div>
 
-        {/* Login/Verification Form */}
+        {/* Login/Email/Verification Form */}
         <div className="bg-white rounded-lg shadow-2xl p-8">
           {step === 'login' ? (
             <>
@@ -186,6 +207,69 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                 >
                   {isLoading ? 'Connexion...' : 'Se connecter'}
                 </button>
+              </form>
+            </>
+          ) : step === 'email' ? (
+            <>
+              <div className="text-center mb-6">
+                <div className="mx-auto h-16 w-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+                  <Mail className="h-8 w-8 text-yellow-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900">Vérification par Email</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Entrez l'adresse email où vous souhaitez recevoir le code de vérification
+                </p>
+              </div>
+
+              <form onSubmit={handleEmailSubmit} className="space-y-6">
+                {error && (
+                  <div className="bg-red-50 border border-red-200 rounded-md p-4 flex items-center">
+                    <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
+                    <span className="text-red-700 text-sm">{error}</span>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Adresse email
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                      placeholder="exemple@email.com"
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Le code de vérification sera envoyé à cette adresse
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-yellow-600 text-white py-3 px-4 rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                  >
+                    {isLoading ? 'Envoi en cours...' : 'Envoyer le code'}
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep('login');
+                      setError('');
+                      setEmail('');
+                    }}
+                    className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors font-medium"
+                  >
+                    Retour à la connexion
+                  </button>
+                </div>
               </form>
             </>
           ) : (
@@ -256,13 +340,13 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                   <button
                     type="button"
                     onClick={() => {
-                      setStep('login');
+                      setStep('email');
                       setError('');
                       setVerificationCode('');
                     }}
                     className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors font-medium"
                   >
-                    Retour à la connexion
+                    Changer d'email
                   </button>
                 </div>
               </form>
