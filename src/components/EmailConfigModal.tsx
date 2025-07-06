@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Mail, CheckCircle, Settings, Clock, BarChart3 } from 'lucide-react';
+import { X, Mail, CheckCircle, Settings, Clock, BarChart3, RefreshCw, XCircle } from 'lucide-react';
 import { emailService } from '../services/emailService';
 
 interface EmailConfigModalProps {
@@ -35,6 +35,14 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
     }
   };
 
+  const handleResetQuota = () => {
+    emailService.resetQuotaFlag();
+    setTestResult({
+      success: true,
+      message: 'Flag de quota réinitialisé avec succès. Vous pouvez maintenant tenter d\'envoyer des emails.'
+    });
+  };
+
   const queueStats = emailService.getQueueStats();
 
   return (
@@ -61,15 +69,22 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
           <div className="px-6 py-4">
             <div className="space-y-6">
               {/* Status de la configuration */}
-              <div className="bg-green-50 rounded-lg p-4">
+              <div className={`rounded-lg p-4 ${queueStats.quotaReached ? 'bg-red-50' : 'bg-green-50'}`}>
                 <div className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
-                  <h3 className="text-sm font-medium text-green-900">
-                    Configuration automatique activée
+                  {queueStats.quotaReached ? (
+                    <XCircle className="w-5 h-5 text-red-500 mr-2" />
+                  ) : (
+                    <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
+                  )}
+                  <h3 className={`text-sm font-medium ${queueStats.quotaReached ? 'text-red-900' : 'text-green-900'}`}>
+                    {queueStats.quotaReached ? 'Quota EmailJS atteint' : 'Configuration automatique activée'}
                   </h3>
                 </div>
-                <p className="mt-2 text-sm text-green-800">
-                  {emailService.getConfigurationStatus()}
+                <p className={`mt-2 text-sm ${queueStats.quotaReached ? 'text-red-800' : 'text-green-800'}`}>
+                  {queueStats.quotaReached 
+                    ? 'Le quota EmailJS a été atteint. Les emails ne peuvent plus être envoyés jusqu\'à la réinitialisation du quota ou l\'upgrade du plan.'
+                    : emailService.getConfigurationStatus()
+                  }
                 </p>
               </div>
 
@@ -93,6 +108,12 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
                   <div className="flex justify-between">
                     <span>Dernier envoi :</span>
                     <span className="font-medium">{queueStats.lastEmailTime}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Quota atteint :</span>
+                    <span className={`font-medium ${queueStats.quotaReached ? 'text-red-600' : 'text-green-600'}`}>
+                      {queueStats.quotaReached ? 'Oui' : 'Non'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -166,14 +187,26 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
 
               {/* Actions */}
               <div className="flex justify-between space-x-3 pt-4 border-t">
-                <button
-                  onClick={handleTestEmail}
-                  disabled={isTestingEmail}
-                  className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-md hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                >
-                  <Mail className="w-4 h-4 mr-2" />
-                  {isTestingEmail ? 'Test en cours...' : 'Tester l\'email'}
-                </button>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={handleTestEmail}
+                    disabled={isTestingEmail}
+                    className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-md hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                  >
+                    <Mail className="w-4 h-4 mr-2" />
+                    {isTestingEmail ? 'Test en cours...' : 'Tester l\'email'}
+                  </button>
+
+                  {queueStats.quotaReached && (
+                    <button
+                      onClick={handleResetQuota}
+                      className="px-4 py-2 text-sm font-medium text-orange-700 bg-orange-100 border border-orange-300 rounded-md hover:bg-orange-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 flex items-center"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Réinitialiser quota
+                    </button>
+                  )}
+                </div>
 
                 <button
                   onClick={onClose}
