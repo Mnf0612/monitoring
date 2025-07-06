@@ -309,23 +309,6 @@ export function LoginForm({ onLogin }: LoginFormProps) {
             </div>
           </div>
         </div>
-
-        {/* Demo Credentials */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-          <h4 className="text-white font-medium mb-2 text-sm flex items-center">
-            <div className="h-4 w-4 bg-white rounded-full flex items-center justify-center mr-2">
-              <div className="text-yellow-600 font-black text-xs">M</div>
-            </div>
-            Comptes de démonstration MTN :
-          </h4>
-          <div className="space-y-1 text-xs text-yellow-100">
-            <div>👑 <strong>admin</strong> / admin123 (Administrateur MTN)</div>
-            <div>👨‍💼 <strong>operator1</strong> / operator123 (Opérateur IP)</div>
-            <div>🔧 <strong>tech1</strong> / tech123 (Technicien Power)</div>
-            <div>📡 <strong>tech2</strong> / tech123 (Technicien Transmission)</div>
-            <div>💻 <strong>tech3</strong> / tech123 (Technicien BSS)</div>
-          </div>
-        </div>
       </div>
     </div>
   );
