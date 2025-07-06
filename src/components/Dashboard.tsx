@@ -74,10 +74,10 @@ export function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">
-                  Dashboard de Monitoring BTS
+                  Dashboard de Monitoring Réseau
                 </h1>
                 <p className="mt-2 text-gray-600">
-                  Surveillance en temps réel des 50 sites BTS - 10 régions du Cameroun
+                  Surveillance en temps réel de 1000 sites - 10 régions du Cameroun
                 </p>
               </div>
               <div className="flex items-center space-x-2 text-sm text-gray-500">

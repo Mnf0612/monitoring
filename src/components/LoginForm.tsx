@@ -142,9 +142,9 @@ export function LoginForm({ onLogin }: LoginFormProps) {
           
           <div className="mb-4">
             <h1 className="text-4xl font-bold text-white mb-2">MTN Cameroon</h1>
-            <h2 className="text-2xl font-semibold text-yellow-100">BTS Monitor</h2>
+            <h2 className="text-2xl font-semibold text-yellow-100">Network Monitor</h2>
           </div>
-          <p className="mt-2 text-yellow-100">Système de surveillance des sites BTS</p>
+          <p className="mt-2 text-yellow-100">Système de surveillance du réseau</p>
           <p className="mt-4 text-sm text-yellow-200">
             Surveillance en temps réel • 1000 sites • 10 régions du Cameroun
           </p>
@@ -389,12 +389,12 @@ export function LoginForm({ onLogin }: LoginFormProps) {
               />
               <div className="text-yellow-600 font-black text-xs hidden">MTN</div>
             </div>
-            <h3 className="text-white font-medium">MTN Cameroon BTS Monitor</h3>
+            <h3 className="text-white font-medium">MTN Cameroon Network Monitor</h3>
           </div>
           <div className="space-y-2 text-sm text-yellow-100">
             <div className="flex justify-between">
               <span>Sites surveillés :</span>
-              <span className="font-medium">1000 sites BTS</span>
+              <span className="font-medium">1000 sites</span>
             </div>
             <div className="flex justify-between">
               <span>Couverture :</span>

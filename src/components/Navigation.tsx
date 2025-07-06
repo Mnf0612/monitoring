@@ -38,7 +38,7 @@ export function Navigation({ currentPage, onPageChange, onLogout }: NavigationPr
                   />
                   <Activity className="w-5 h-5 text-blue-600 hidden" />
                 </div>
-                <span className="text-xl font-bold text-gray-900">BTS Monitor</span>
+                <span className="text-xl font-bold text-gray-900">Network Monitor</span>
               </div>
               
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">

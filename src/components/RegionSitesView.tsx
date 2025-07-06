@@ -80,7 +80,7 @@ export function RegionSitesView({ sites, alarms, selectedRegion, onRegionChange,
           <div className="flex items-center">
             <MapPin className="w-5 h-5 text-blue-600 mr-2" />
             <h2 className="text-lg font-semibold text-gray-900">
-              Sites BTS {selectedRegion !== 'all' ? `- ${selectedRegion}` : ''}
+              Sites Réseau {selectedRegion !== 'all' ? `- ${selectedRegion}` : ''}
             </h2>
           </div>
           <div className="flex items-center space-x-2">
