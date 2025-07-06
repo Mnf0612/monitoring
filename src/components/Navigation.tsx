@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Activity, Ticket, Users, Settings, Mail, LogOut, User, Shield } from 'lucide-react';
+import { Activity, Ticket, Users, Settings, Mail, LogOut, User, Shield, AlertOctagon } from 'lucide-react';
 import { authService } from '../services/authService';
 import { EmailConfigModal } from './EmailConfigModal';
 
 interface NavigationProps {
-  currentPage: 'dashboard' | 'tickets' | 'admin';
-  onPageChange: (page: 'dashboard' | 'tickets' | 'admin') => void;
+  currentPage: 'dashboard' | 'tickets' | 'admin' | 'outages';
+  onPageChange: (page: 'dashboard' | 'tickets' | 'admin' | 'outages') => void;
   onLogout: () => void;
 }
 
@@ -25,8 +25,20 @@ export function Navigation({ currentPage, onPageChange, onLogout }: NavigationPr
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
-                <Activity className="w-8 h-8 text-blue-600" />
-                <span className="ml-2 text-xl font-bold text-gray-900">BTS Monitor</span>
+                <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center mr-2 overflow-hidden">
+                  <img 
+                    src="/image.png" 
+                    alt="Logo" 
+                    className="h-6 w-6 object-contain"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      target.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                  <Activity className="w-5 h-5 text-blue-600 hidden" />
+                </div>
+                <span className="text-xl font-bold text-gray-900">BTS Monitor</span>
               </div>
               
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
@@ -40,6 +52,18 @@ export function Navigation({ currentPage, onPageChange, onLogout }: NavigationPr
                 >
                   <Activity className="w-4 h-4 mr-2" />
                   Dashboard Principal
+                </button>
+                
+                <button
+                  onClick={() => onPageChange('outages')}
+                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                    currentPage === 'outages'
+                      ? 'border-blue-500 text-gray-900'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  }`}
+                >
+                  <AlertOctagon className="w-4 h-4 mr-2" />
+                  Surveillance Pannes
                 </button>
                 
                 <button

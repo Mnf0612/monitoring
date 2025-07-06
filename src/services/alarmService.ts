@@ -20,15 +20,31 @@ class AlarmService {
       'Nord', 'Nord-Ouest', 'Ouest', 'Sud', 'Sud-Ouest'
     ];
 
-    // Créer 5 sites par région (50 sites au total)
+    // Distribution variable des sites par région (total: 1000 sites)
+    const regionSiteDistribution = {
+      'Centre': 150,        // Région capitale - plus de sites
+      'Littoral': 120,      // Région économique - beaucoup de sites
+      'Ouest': 110,         // Région densément peuplée
+      'Nord': 100,          // Grande région
+      'Extrême-Nord': 95,   // Grande région
+      'Sud': 90,            // Région forestière
+      'Est': 85,            // Grande région peu peuplée
+      'Adamaoua': 80,       // Région de transition
+      'Nord-Ouest': 85,     // Région montagneuse
+      'Sud-Ouest': 85       // Région côtière
+    };
+
+    // Créer les sites avec distribution variable
     cameroonRegions.forEach((region, regionIndex) => {
-      for (let i = 1; i <= 5; i++) {
-        const siteId = `${regionIndex + 1}${i.toString().padStart(2, '0')}`;
+      const siteCount = regionSiteDistribution[region as keyof typeof regionSiteDistribution];
+      
+      for (let i = 1; i <= siteCount; i++) {
+        const siteId = `${regionIndex + 1}${i.toString().padStart(3, '0')}`;
         const site: Site = {
           id: siteId,
           name: `BTS-${region.substring(0, 3).toUpperCase()}-${siteId}`,
           region,
-          status: Math.random() > 0.8 ? 'offline' : Math.random() > 0.9 ? 'maintenance' : 'online',
+          status: Math.random() > 0.85 ? 'offline' : Math.random() > 0.95 ? 'maintenance' : 'online',
           coordinates: [
             3 + Math.random() * 8, // Longitude approximative du Cameroun
             9 + Math.random() * 4   // Latitude approximative du Cameroun
@@ -38,41 +54,49 @@ class AlarmService {
         this.sites.push(site);
       }
     });
+
+    console.log(`🏗️ ${this.sites.length} sites BTS initialisés dans ${cameroonRegions.length} régions`);
+    
+    // Afficher la distribution par région
+    cameroonRegions.forEach(region => {
+      const count = this.sites.filter(s => s.region === region).length;
+      console.log(`📍 ${region}: ${count} sites`);
+    });
   }
 
   private initializeAlarms() {
     // Créer quelques alarmes initiales
     const initialAlarms = [
       {
-        site: 'BTS-CEN-101',
+        site: 'BTS-CEN-1001',
         type: 'power' as const,
         severity: 'critical' as const,
         message: 'Panne d\'alimentation principale - Générateur en panne',
         region: 'Centre'
       },
       {
-        site: 'BTS-LIT-201',
+        site: 'BTS-LIT-1001',
         type: 'ip' as const,
         severity: 'major' as const,
         message: 'Connectivité IP interrompue - Routeur principal défaillant',
         region: 'Littoral'
       },
       {
-        site: 'BTS-ADA-301',
+        site: 'BTS-ADA-1001',
         type: 'transmission' as const,
         severity: 'minor' as const,
         message: 'Signal de transmission faible - Antenne mal orientée',
         region: 'Adamaoua'
       },
       {
-        site: 'BTS-SUD-401',
+        site: 'BTS-SUD-1001',
         type: 'bss' as const,
         severity: 'warning' as const,
         message: 'Charge CPU élevée sur BSC - Optimisation requise',
         region: 'Sud'
       },
       {
-        site: 'BTS-NOR-501',
+        site: 'BTS-NOR-1001',
         type: 'hardware' as const,
         severity: 'major' as const,
         message: 'Ventilateur défaillant - Risque de surchauffe',

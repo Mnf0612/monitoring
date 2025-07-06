@@ -4,6 +4,7 @@ import { Navigation } from './components/Navigation';
 import { Dashboard } from './components/Dashboard';
 import { TicketDashboard } from './components/TicketDashboard';
 import { AdminDashboard } from './components/AdminDashboard';
+import { OutageDashboard } from './components/OutageDashboard';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { authService } from './services/authService';
 import { AuthState } from './types';
@@ -14,7 +15,7 @@ function App() {
     isAuthenticated: false,
     isLoading: true
   });
-  const [currentPage, setCurrentPage] = useState<'dashboard' | 'tickets' | 'admin'>('dashboard');
+  const [currentPage, setCurrentPage] = useState<'dashboard' | 'tickets' | 'admin' | 'outages'>('dashboard');
 
   useEffect(() => {
     // Initialize auth state
@@ -72,6 +73,12 @@ function App() {
         {currentPage === 'dashboard' && (
           <ProtectedRoute requiredPermission="view_dashboard">
             <Dashboard />
+          </ProtectedRoute>
+        )}
+        
+        {currentPage === 'outages' && (
+          <ProtectedRoute requiredPermission="view_dashboard">
+            <OutageDashboard />
           </ProtectedRoute>
         )}
         

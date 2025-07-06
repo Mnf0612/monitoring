@@ -66,3 +66,23 @@ export interface DashboardStats {
   openTickets: number;
   resolvedTickets: number;
 }
+
+export interface Outage {
+  id: string;
+  type: 'power' | 'transmission' | 'network' | 'hardware';
+  severity: 'critical' | 'major' | 'minor';
+  title: string;
+  description: string;
+  affectedSites: {
+    id: string;
+    name: string;
+    region: string;
+  }[];
+  parentSite: string;
+  status: 'active' | 'investigating' | 'resolved';
+  startTime: string;
+  endTime?: string;
+  estimatedResolutionTime?: string;
+  resolution?: string;
+  ticketId?: string;
+}

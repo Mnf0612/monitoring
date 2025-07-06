@@ -119,11 +119,22 @@ export function LoginForm({ onLogin }: LoginFormProps) {
       </div>
 
       <div className="max-w-md w-full space-y-8 relative z-10">
-        {/* Header with MTN Logo */}
+        {/* Header with Custom Logo */}
         <div className="text-center">
-          {/* MTN Logo Container */}
-          <div className="mx-auto h-24 w-24 bg-white rounded-full flex items-center justify-center mb-6 shadow-2xl border-4 border-yellow-300">
-            <div className="text-center">
+          {/* Custom Logo Container */}
+          <div className="mx-auto h-24 w-24 bg-white rounded-full flex items-center justify-center mb-6 shadow-2xl border-4 border-yellow-300 overflow-hidden">
+            <img 
+              src="/image.png" 
+              alt="Company Logo" 
+              className="h-20 w-20 object-contain"
+              onError={(e) => {
+                // Fallback to MTN logo if custom logo fails to load
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                target.nextElementSibling?.classList.remove('hidden');
+              }}
+            />
+            <div className="text-center hidden">
               <div className="text-yellow-600 font-black text-2xl leading-none">MTN</div>
               <div className="text-yellow-500 text-xs font-bold tracking-wider">CAMEROON</div>
             </div>
@@ -135,7 +146,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
           </div>
           <p className="mt-2 text-yellow-100">Système de surveillance des sites BTS</p>
           <p className="mt-4 text-sm text-yellow-200">
-            Surveillance en temps réel • 50 sites • 10 régions du Cameroun
+            Surveillance en temps réel • 1000 sites • 10 régions du Cameroun
           </p>
         </div>
 
@@ -365,15 +376,25 @@ export function LoginForm({ onLogin }: LoginFormProps) {
         {/* MTN System Info */}
         <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 border border-white/20">
           <div className="flex items-center mb-3">
-            <div className="h-8 w-8 bg-white rounded-full flex items-center justify-center mr-3">
-              <div className="text-yellow-600 font-black text-xs">MTN</div>
+            <div className="h-8 w-8 bg-white rounded-full flex items-center justify-center mr-3 overflow-hidden">
+              <img 
+                src="/image.png" 
+                alt="Logo" 
+                className="h-6 w-6 object-contain"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  target.nextElementSibling?.classList.remove('hidden');
+                }}
+              />
+              <div className="text-yellow-600 font-black text-xs hidden">MTN</div>
             </div>
             <h3 className="text-white font-medium">MTN Cameroon BTS Monitor</h3>
           </div>
           <div className="space-y-2 text-sm text-yellow-100">
             <div className="flex justify-between">
               <span>Sites surveillés :</span>
-              <span className="font-medium">50 sites BTS</span>
+              <span className="font-medium">1000 sites BTS</span>
             </div>
             <div className="flex justify-between">
               <span>Couverture :</span>
