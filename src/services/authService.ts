@@ -99,7 +99,22 @@ class AuthService {
       return { success: false, error: 'Mot de passe incorrect' };
     }
 
-    // Store user for verification step
+    // Admin users bypass double authentication
+    if (user.role === 'admin') {
+      user.lastLogin = new Date().toISOString();
+      this.currentUser = user;
+      
+      // Store in localStorage
+      localStorage.setItem('bts_auth_user', JSON.stringify(user));
+      
+      this.notifyListeners();
+      
+      console.log(`✅ Connexion admin directe réussie: ${user.username} (${user.role})`);
+      
+      return { success: true };
+    }
+
+    // Non-admin users require verification
     this.pendingVerification = {
       user,
       code: '',
