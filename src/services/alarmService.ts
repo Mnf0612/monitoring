@@ -65,7 +65,7 @@ class AlarmService {
   }
 
   private initializeAlarms() {
-    // Créer quelques alarmes initiales
+    // Créer plus d'alarmes initiales pour avoir un Top 10 complet
     const initialAlarms = [
       {
         site: 'BTS-CEN-1001',
@@ -101,6 +101,113 @@ class AlarmService {
         severity: 'major' as const,
         message: 'Ventilateur défaillant - Risque de surchauffe',
         region: 'Nord'
+      },
+      // Ajouter plus d'alarmes pour différents sites
+      {
+        site: 'BTS-CEN-1002',
+        type: 'power' as const,
+        severity: 'critical' as const,
+        message: 'Batterie de secours défaillante',
+        region: 'Centre'
+      },
+      {
+        site: 'BTS-CEN-1003',
+        type: 'ip' as const,
+        severity: 'major' as const,
+        message: 'Latence réseau élevée détectée',
+        region: 'Centre'
+      },
+      {
+        site: 'BTS-LIT-1002',
+        type: 'transmission' as const,
+        severity: 'major' as const,
+        message: 'Interférence radio détectée',
+        region: 'Littoral'
+      },
+      {
+        site: 'BTS-LIT-1003',
+        type: 'hardware' as const,
+        severity: 'critical' as const,
+        message: 'Processeur surchauffé',
+        region: 'Littoral'
+      },
+      {
+        site: 'BTS-OUE-1001',
+        type: 'power' as const,
+        severity: 'major' as const,
+        message: 'Onduleur défaillant',
+        region: 'Ouest'
+      },
+      {
+        site: 'BTS-OUE-1002',
+        type: 'bss' as const,
+        severity: 'minor' as const,
+        message: 'Mémoire BSC saturée',
+        region: 'Ouest'
+      },
+      {
+        site: 'BTS-EST-1001',
+        type: 'security' as const,
+        severity: 'warning' as const,
+        message: 'Certificat SSL expiré',
+        region: 'Est'
+      },
+      {
+        site: 'BTS-ENO-1001',
+        type: 'transmission' as const,
+        severity: 'major' as const,
+        message: 'Câble coaxial endommagé',
+        region: 'Extrême-Nord'
+      },
+      {
+        site: 'BTS-NOO-1001',
+        type: 'ip' as const,
+        severity: 'critical' as const,
+        message: 'Interface réseau down',
+        region: 'Nord-Ouest'
+      },
+      {
+        site: 'BTS-SUO-1001',
+        type: 'hardware' as const,
+        severity: 'major' as const,
+        message: 'Disque dur plein',
+        region: 'Sud-Ouest'
+      },
+      // Ajouter encore plus d'alarmes pour avoir un Top 10 complet
+      {
+        site: 'BTS-CEN-1004',
+        type: 'power' as const,
+        severity: 'minor' as const,
+        message: 'Surtension détectée',
+        region: 'Centre'
+      },
+      {
+        site: 'BTS-CEN-1005',
+        type: 'transmission' as const,
+        severity: 'warning' as const,
+        message: 'Qualité signal dégradée',
+        region: 'Centre'
+      },
+      {
+        site: 'BTS-LIT-1004',
+        type: 'bss' as const,
+        severity: 'major' as const,
+        message: 'Processus BSC bloqué',
+        region: 'Littoral'
+      },
+      {
+        site: 'BTS-OUE-1003',
+        type: 'ip' as const,
+        severity: 'minor' as const,
+        message: 'Perte de paquets importante',
+        region: 'Ouest'
+      },
+      {
+        site: 'BTS-NOR-1002',
+        type: 'security' as const,
+        severity: 'critical' as const,
+        message: 'Tentative d\'intrusion détectée',
+        region: 'Nord'
       }
     ];
 
@@ -125,17 +232,17 @@ class AlarmService {
   }
 
   private startAlarmGeneration() {
-    // Générer une nouvelle alarme toutes les 2-5 minutes
+    // Générer une nouvelle alarme plus fréquemment (toutes les 1-3 minutes)
     this.alarmGenerationInterval = setInterval(() => {
       this.generateRandomAlarm();
-    }, Math.random() * 180000 + 120000); // 2-5 minutes
+    }, Math.random() * 120000 + 60000); // 1-3 minutes
   }
 
   private startAlarmResolution() {
-    // Résoudre automatiquement certaines alarmes toutes les 3-8 minutes
+    // Résoudre automatiquement certaines alarmes toutes les 5-10 minutes
     this.alarmResolutionInterval = setInterval(() => {
       this.autoResolveAlarms();
-    }, Math.random() * 300000 + 180000); // 3-8 minutes
+    }, Math.random() * 300000 + 300000); // 5-10 minutes
   }
 
   private async generateRandomAlarm() {
@@ -227,8 +334,8 @@ class AlarmService {
     
     if (activeAlarms.length === 0) return;
 
-    // Résoudre 1-2 alarmes aléatoirement
-    const alarmsToResolve = Math.min(2, Math.floor(Math.random() * activeAlarms.length) + 1);
+    // Résoudre moins d'alarmes pour maintenir un niveau élevé
+    const alarmsToResolve = Math.min(1, Math.floor(Math.random() * activeAlarms.length) + 1);
     
     for (let i = 0; i < alarmsToResolve; i++) {
       const randomAlarm = activeAlarms[Math.floor(Math.random() * activeAlarms.length)];
@@ -310,10 +417,11 @@ class AlarmService {
     return [...new Set(this.sites.map(site => site.region))].sort();
   }
 
-  // Méthode pour obtenir le top 10 des sites les plus impactés
+  // Méthode améliorée pour obtenir le top des sites les plus impactés
   getTopImpactedSites(): { site: string; alarmCount: number; region: string }[] {
     const siteAlarmCounts = new Map<string, { count: number; region: string }>();
     
+    // Compter toutes les alarmes (actives et résolues) pour avoir plus de données
     this.alarms.forEach(alarm => {
       const current = siteAlarmCounts.get(alarm.site) || { count: 0, region: alarm.region };
       siteAlarmCounts.set(alarm.site, { count: current.count + 1, region: alarm.region });
@@ -322,7 +430,7 @@ class AlarmService {
     return Array.from(siteAlarmCounts.entries())
       .map(([site, data]) => ({ site, alarmCount: data.count, region: data.region }))
       .sort((a, b) => b.alarmCount - a.alarmCount)
-      .slice(0, 10);
+      .slice(0, 15); // Augmenter à 15 pour avoir plus de sites dans le top
   }
 
   // Nettoyer les intervalles lors de la destruction
