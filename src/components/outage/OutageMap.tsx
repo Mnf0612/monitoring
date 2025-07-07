@@ -29,7 +29,7 @@ export function OutageMap({ outages, selectedRegion, onRegionSelect, onOutageSel
 
   const getOutagesForRegion = (regionName: string) => {
     return outages.filter(outage => 
-      outage.affectedSites.some(site => site.region === regionName) && 
+      outage.affectedSites?.some(site => site.region === regionName) && 
       outage.status === 'active'
     );
   };
@@ -166,7 +166,7 @@ export function OutageMap({ outages, selectedRegion, onRegionSelect, onOutageSel
               const outageLevel = getRegionOutageLevel(region.name);
               const regionOutages = getOutagesForRegion(region.name);
               const totalAffectedSites = regionOutages.reduce((sum, outage) => 
-                sum + outage.affectedSites.filter(site => site.region === region.name).length, 0
+                sum + (outage.affectedSites?.filter(site => site.region === region.name).length || 0), 0
               );
 
               return (
@@ -263,7 +263,7 @@ export function OutageMap({ outages, selectedRegion, onRegionSelect, onOutageSel
             {/* Sites de la région avec indicateurs de panne */}
             {getRegionSites(zoomedRegion).map((site) => {
               const siteOutages = outages.filter(outage => 
-                outage.affectedSites.some(affectedSite => affectedSite.id === site.id) &&
+                outage.affectedSites?.some(affectedSite => affectedSite.id === site.id) &&
                 outage.status === 'active'
               );
 
@@ -437,7 +437,7 @@ export function OutageMap({ outages, selectedRegion, onRegionSelect, onOutageSel
                           {outage.title}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {outage.affectedSites.length} sites • {outage.affectedSites.map(s => s.region).filter((v, i, a) => a.indexOf(v) === i).join(', ')}
+                          {outage.affectedSites?.length || 0} sites • {outage.affectedSites?.map(s => s.region).filter((v, i, a) => a.indexOf(v) === i).join(', ') || 'N/A'}
                         </div>
                         <div className="text-xs text-red-600 font-medium">
                           Type: {outage.type} • Sévérité: {outage.severity}

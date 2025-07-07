@@ -16,7 +16,7 @@ export function OutageList({ outages, selectedRegion, onRegionChange, regions, o
   const filteredOutages = selectedRegion === 'all' 
     ? outages 
     : outages.filter(outage => 
-        outage.affectedSites.some(site => site.region === selectedRegion)
+        outage.affectedSites?.some(site => site.region === selectedRegion)
       );
 
   const getSeverityColor = (severity: string) => {
@@ -126,12 +126,12 @@ export function OutageList({ outages, selectedRegion, onRegionChange, regions, o
                     <div className="flex items-center space-x-4 text-xs text-gray-500">
                       <div className="flex items-center">
                         <MapPin className="w-3 h-3 mr-1" />
-                        <span>{outage.affectedSites.length} sites</span>
+                        <span>{outage.affectedSites?.length || 0} sites</span>
                       </div>
                       <div className="flex items-center">
                         <Users className="w-3 h-3 mr-1" />
                         <span>
-                          {outage.affectedSites.map(s => s.region).filter((v, i, a) => a.indexOf(v) === i).length} région(s)
+                          {outage.affectedSites?.map(s => s.region).filter((v, i, a) => a.indexOf(v) === i).length || 0} région(s)
                         </span>
                       </div>
                       <div className="flex items-center">
