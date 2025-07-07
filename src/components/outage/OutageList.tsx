@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outage } from '../../types';
 import { AlertTriangle, Clock, MapPin, Users, CheckCircle } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 interface OutageListProps {
@@ -49,12 +49,21 @@ export function OutageList({ outages, selectedRegion, onRegionChange, regions, o
   const getDuration = (startTime: string, endTime?: string) => {
     const start = new Date(startTime);
     const end = endTime ? new Date(endTime) : new Date();
+    
+    if (!isValid(start) || !isValid(end)) return 'N/A';
+    
     const diffMinutes = Math.floor((end.getTime() - start.getTime()) / 60000);
     
     if (diffMinutes < 60) return `${diffMinutes}min`;
     const hours = Math.floor(diffMinutes / 60);
     const minutes = diffMinutes % 60;
     return `${hours}h${minutes > 0 ? ` ${minutes}min` : ''}`;
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    if (!isValid(date)) return 'N/A';
+    return format(date, 'dd/MM/yyyy HH:mm', { locale: fr });
   };
 
   return (
@@ -141,7 +150,7 @@ export function OutageList({ outages, selectedRegion, onRegionChange, regions, o
                     </div>
 
                     <div className="mt-2 text-xs text-gray-500">
-                      Début: {format(new Date(outage.startTime), 'dd/MM/yyyy HH:mm', { locale: fr })}
+                      Début: {formatDate(outage.startTime)}
                     </div>
 
                     {outage.ticketId && (

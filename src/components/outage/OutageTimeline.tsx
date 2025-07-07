@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outage } from '../../types';
 import { Clock, AlertTriangle, CheckCircle, Search } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 interface OutageTimelineProps {
@@ -35,12 +35,27 @@ export function OutageTimeline({ outages }: OutageTimelineProps) {
   const getDuration = (startTime: string, endTime?: string) => {
     const start = new Date(startTime);
     const end = endTime ? new Date(endTime) : new Date();
+    
+    if (!isValid(start) || !isValid(end)) return 'N/A';
+    
     const diffMinutes = Math.floor((end.getTime() - start.getTime()) / 60000);
     
     if (diffMinutes < 60) return `${diffMinutes}min`;
     const hours = Math.floor(diffMinutes / 60);
     const minutes = diffMinutes % 60;
     return `${hours}h${minutes > 0 ? ` ${minutes}min` : ''}`;
+  };
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    if (!isValid(date)) return 'N/A';
+    return format(date, 'HH:mm', { locale: fr });
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    if (!isValid(date)) return 'N/A';
+    return format(date, 'dd/MM', { locale: fr });
   };
 
   return (
@@ -90,7 +105,7 @@ export function OutageTimeline({ outages }: OutageTimelineProps) {
                               {outage.description}
                             </p>
                             <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
-                              <span>{outage.affectedSites.length} sites impactés</span>
+                              <span>{outage.affectedSites?.length || 0} sites impactés</span>
                               <span>Durée: {getDuration(outage.startTime, outage.endTime)}</span>
                               {outage.ticketId && (
                                 <span className="text-blue-600">Ticket #{outage.ticketId}</span>
@@ -99,10 +114,10 @@ export function OutageTimeline({ outages }: OutageTimelineProps) {
                           </div>
                           <div className="text-right">
                             <p className="text-sm text-gray-900">
-                              {format(new Date(outage.startTime), 'HH:mm', { locale: fr })}
+                              {formatTime(outage.startTime)}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {format(new Date(outage.startTime), 'dd/MM', { locale: fr })}
+                              {formatDate(outage.startTime)}
                             </p>
                           </div>
                         </div>
@@ -110,7 +125,7 @@ export function OutageTimeline({ outages }: OutageTimelineProps) {
                         {/* Régions affectées */}
                         <div className="mt-2">
                           <div className="flex flex-wrap gap-1">
-                            {outage.affectedSites
+                            {(outage.affectedSites || [])
                               .map(site => site.region)
                               .filter((region, index, array) => array.indexOf(region) === index)
                               .map(region => (
