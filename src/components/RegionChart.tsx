@@ -1,7 +1,7 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Site, Alarm } from '../types';
-import { MapPin, TrendingUp, Activity, AlertTriangle } from 'lucide-react';
+import { MapPin, TrendingUp, Activity } from 'lucide-react';
 
 interface RegionChartProps {
   sites: Site[];
@@ -45,12 +45,6 @@ export function RegionChart({ sites, alarms, selectedRegion, onRegionSelect }: R
     { name: 'Hors ligne', value: sites.filter(s => s.status === 'offline').length, color: '#ef4444' },
     { name: 'Maintenance', value: sites.filter(s => s.status === 'maintenance').length, color: '#f59e0b' }
   ];
-
-  // Données pour le graphique des alarmes par région
-  const alarmsByRegion = chartData.map(region => ({
-    region: region.region,
-    alarmes: region.alarms
-  })).sort((a, b) => b.alarmes - a.alarmes);
 
   const handleRegionClick = (data: any) => {
     if (data && data.region) {
@@ -113,61 +107,32 @@ export function RegionChart({ sites, alarms, selectedRegion, onRegionSelect }: R
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Graphique en secteurs - Répartition globale */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-4 flex items-center">
-              <MapPin className="w-4 h-4 mr-2" />
-              Répartition Globale des Sites
-            </h3>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={statusData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {statusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Graphique des alarmes par région */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-4 flex items-center">
-              <AlertTriangle className="w-4 h-4 mr-2" />
-              Alarmes par Région
-            </h3>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={alarmsByRegion} layout="horizontal">
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
-                  <YAxis 
-                    dataKey="region" 
-                    type="category" 
-                    width={80}
-                    fontSize={11}
-                  />
-                  <Tooltip 
-                    formatter={(value) => [value, 'Alarmes']}
-                    labelFormatter={(label) => `Région: ${label}`}
-                  />
-                  <Bar dataKey="alarmes" fill="#f59e0b" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+        {/* Graphique en secteurs - Répartition globale */}
+        <div>
+          <h3 className="text-sm font-medium text-gray-700 mb-4 flex items-center">
+            <MapPin className="w-4 h-4 mr-2" />
+            Répartition Globale des Sites
+          </h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={statusData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {statusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </div>
 

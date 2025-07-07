@@ -3,6 +3,7 @@ import { StatsCards } from './StatsCards';
 import { RegionChart } from './RegionChart';
 import { AlarmChart } from './AlarmChart';
 import { TopImpactedSites } from './TopImpactedSites';
+import { AlarmPanel } from './AlarmPanel';
 import { alarmService } from '../services/alarmService';
 import { DashboardStats } from '../types';
 import { Activity, Zap, AlertTriangle, CheckCircle } from 'lucide-react';
@@ -64,6 +65,11 @@ export function Dashboard() {
     }
   ];
 
+  const alarms = alarmService.getAlarms();
+  const filteredAlarms = selectedRegion === 'all' 
+    ? alarms 
+    : alarms.filter(alarm => alarm.region === selectedRegion);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white shadow">
@@ -91,12 +97,19 @@ export function Dashboard() {
         <StatsCards cards={statCards} />
 
         <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-8">
             <RegionChart 
               sites={alarmService.getSites()}
               alarms={alarmService.getAlarms()}
               selectedRegion={selectedRegion}
               onRegionSelect={setSelectedRegion}
+            />
+            
+            <AlarmPanel 
+              alarms={filteredAlarms}
+              regions={alarmService.getRegions()}
+              selectedRegion={selectedRegion}
+              onRegionChange={setSelectedRegion}
             />
           </div>
           
