@@ -3,7 +3,6 @@ import { StatsCards } from './StatsCards';
 import { RegionChart } from './RegionChart';
 import { AlarmChart } from './AlarmChart';
 import { TopImpactedSites } from './TopImpactedSites';
-import { RegionSitesView } from './RegionSitesView';
 import { alarmService } from '../services/alarmService';
 import { DashboardStats } from '../types';
 import { Activity, Zap, AlertTriangle, CheckCircle } from 'lucide-react';
@@ -20,7 +19,6 @@ export function Dashboard() {
 
   const [selectedRegion, setSelectedRegion] = useState<string>('all');
   const [refreshKey, setRefreshKey] = useState(0);
-  const regions = alarmService.getRegions();
 
   useEffect(() => {
     const updateStats = () => {
@@ -106,17 +104,6 @@ export function Dashboard() {
             <AlarmChart alarms={alarmService.getAlarms()} />
             <TopImpactedSites sites={alarmService.getTopImpactedSites()} />
           </div>
-        </div>
-
-        <div className="mt-8">
-          <RegionSitesView 
-            key={refreshKey}
-            sites={alarmService.getSites()}
-            alarms={alarmService.getAlarms()}
-            selectedRegion={selectedRegion}
-            onRegionChange={setSelectedRegion}
-            regions={regions}
-          />
         </div>
       </div>
     </div>
