@@ -159,9 +159,6 @@ export function RegionChart({ sites, alarms, selectedRegion, onRegionSelect }: R
                     Maintenance
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Alarmes
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Taux Disponibilité
                   </th>
                 </tr>
@@ -193,9 +190,6 @@ export function RegionChart({ sites, alarms, selectedRegion, onRegionSelect }: R
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-yellow-600 font-medium">
                         {region.maintenance}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-orange-600 font-medium">
-                        {region.alarms}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm">
                         <div className="flex items-center">
