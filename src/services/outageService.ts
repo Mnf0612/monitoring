@@ -191,6 +191,7 @@ class OutageService {
       if (sites.length >= this.OUTAGE_THRESHOLD) {
         // Vérifier si une panne existe déjà pour cette région
         const existingOutage = this.outages.find(outage => 
+          outage.affectedSites && Array.isArray(outage.affectedSites) && 
           outage.affectedSites.some(site => site.region === region) && 
           outage.status === 'active'
         );
@@ -248,13 +249,16 @@ class OutageService {
     affectedSites: Site[],
     parentSite: string
   ): Promise<Outage> {
+    // Ensure affectedSites is always an array
+    const safeSites = Array.isArray(affectedSites) ? affectedSites : [];
+    
     const outage: Outage = {
       id: `OUT-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
       type: type as any,
       severity: severity as any,
       title,
       description,
-      affectedSites: affectedSites.map(site => ({
+      affectedSites: safeSites.map(site => ({
         id: site.id,
         name: site.name,
         region: site.region
@@ -272,10 +276,10 @@ class OutageService {
         site: parentSite,
         type: type as any,
         severity: severity as any,
-        message: `${title} - ${affectedSites.length} sites impactés`,
+        message: `${title} - ${safeSites.length} sites impactés`,
         timestamp: outage.startTime,
         status: 'active' as const,
-        region: affectedSites[0]?.region || 'Centre'
+        region: safeSites[0]?.region || 'Centre'
       };
 
       const ticket = await ticketService.createTicketFromAlarm(fakeAlarm);
@@ -304,14 +308,16 @@ class OutageService {
         outage.endTime = new Date().toISOString();
         outage.resolution = `Résolution automatique après ${Math.floor(ageMinutes)} minutes`;
         
-        // Remettre les sites en ligne
-        outage.affectedSites.forEach(affectedSite => {
-          const site = alarmService.getSites().find(s => s.id === affectedSite.id);
-          if (site) {
-            site.status = 'online';
-            site.lastUpdate = new Date().toISOString();
-          }
-        });
+        // Remettre les sites en ligne - add defensive check
+        if (outage.affectedSites && Array.isArray(outage.affectedSites)) {
+          outage.affectedSites.forEach(affectedSite => {
+            const site = alarmService.getSites().find(s => s.id === affectedSite.id);
+            if (site) {
+              site.status = 'online';
+              site.lastUpdate = new Date().toISOString();
+            }
+          });
+        }
         
         console.log(`✅ Panne auto-résolue: ${outage.title} (durée: ${Math.floor(ageMinutes)}min)`);
       }
@@ -332,6 +338,7 @@ class OutageService {
 
   getOutagesByRegion(region: string): Outage[] {
     return this.outages.filter(outage => 
+      outage.affectedSites && Array.isArray(outage.affectedSites) &&
       outage.affectedSites.some(site => site.region === region)
     );
   }
@@ -346,7 +353,7 @@ class OutageService {
     });
 
     const totalAffectedSites = activeOutages.reduce((sum, outage) => 
-      sum + outage.affectedSites.length, 0
+      sum + (outage.affectedSites && Array.isArray(outage.affectedSites) ? outage.affectedSites.length : 0), 0
     );
 
     // Calculer le temps moyen de résolution
@@ -368,9 +375,11 @@ class OutageService {
 
   getRegions(): string[] {
     return [...new Set(
-      this.outages.flatMap(outage => 
-        outage.affectedSites.map(site => site.region)
-      )
+      this.outages
+        .filter(outage => outage.affectedSites && Array.isArray(outage.affectedSites))
+        .flatMap(outage => 
+          outage.affectedSites!.map(site => site.region)
+        )
     )].sort();
   }
 
@@ -421,14 +430,16 @@ class OutageService {
       outage.resolution = resolution;
     }
 
-    // Remettre les sites en ligne
-    outage.affectedSites.forEach(affectedSite => {
-      const site = alarmService.getSites().find(s => s.id === affectedSite.id);
-      if (site) {
-        site.status = 'online';
-        site.lastUpdate = new Date().toISOString();
-      }
-    });
+    // Remettre les sites en ligne - add defensive check
+    if (outage.affectedSites && Array.isArray(outage.affectedSites)) {
+      outage.affectedSites.forEach(affectedSite => {
+        const site = alarmService.getSites().find(s => s.id === affectedSite.id);
+        if (site) {
+          site.status = 'online';
+          site.lastUpdate = new Date().toISOString();
+        }
+      });
+    }
 
     console.log(`✅ Panne résolue manuellement: ${outage.title}`);
     return true;
