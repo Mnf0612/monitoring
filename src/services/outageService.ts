@@ -5,52 +5,74 @@ import { ticketService } from './ticketService';
 class OutageService {
   private outages: Outage[] = [];
   private outageDetectionInterval: NodeJS.Timeout | null = null;
-  private readonly OUTAGE_THRESHOLD = 5; // Minimum 5 sites down to be considered an outage
+  private outageGenerationInterval: NodeJS.Timeout | null = null;
+  private readonly OUTAGE_THRESHOLD = 3; // Minimum 3 sites down to be considered an outage
   private readonly PARENT_SITE_PATTERN = /^BTS-([A-Z]{3})-(\d{1})(\d{2})$/; // Pattern: BTS-REG-XYZ where X is parent
 
   constructor() {
     this.startOutageDetection();
+    this.startOutageGeneration();
     this.generateInitialOutages();
   }
 
   private startOutageDetection() {
-    // Vérifier les pannes toutes les 2 minutes
+    // Vérifier les pannes toutes les 1 minute pour une détection plus rapide
     this.outageDetectionInterval = setInterval(() => {
       this.detectOutages();
-    }, 120000);
+    }, 60000);
+  }
+
+  private startOutageGeneration() {
+    // Générer des pannes simulées toutes les 3-8 minutes pour la démonstration
+    this.outageGenerationInterval = setInterval(() => {
+      this.generateSimulatedOutage();
+    }, Math.random() * 300000 + 180000); // 3-8 minutes
   }
 
   private generateInitialOutages() {
-    // Créer quelques pannes initiales pour la démonstration
+    // Créer plusieurs pannes initiales pour la démonstration
     const initialOutages = [
       {
         type: 'power' as const,
         severity: 'critical' as const,
-        title: 'Panne électrique généralisée',
-        description: 'Coupure d\'alimentation affectant plusieurs sites dans la région Centre',
+        title: 'Panne électrique généralisée - Centre',
+        description: 'Coupure d\'alimentation principale affectant le hub de Yaoundé',
         affectedRegions: ['Centre'],
-        parentSite: 'BTS-CEN-101'
+        parentSite: 'BTS-CEN-101',
+        siteCount: 8
       },
       {
         type: 'transmission' as const,
         severity: 'major' as const,
-        title: 'Défaillance liaison micro-ondes',
-        description: 'Interruption de la liaison principale affectant les sites du Nord',
+        title: 'Défaillance liaison micro-ondes - Nord',
+        description: 'Interruption de la liaison principale Garoua-Maroua',
         affectedRegions: ['Nord'],
-        parentSite: 'BTS-NOR-201'
+        parentSite: 'BTS-NOR-201',
+        siteCount: 6
+      },
+      {
+        type: 'network' as const,
+        severity: 'major' as const,
+        title: 'Panne routeur principal - Littoral',
+        description: 'Défaillance du routeur principal de Douala',
+        affectedRegions: ['Littoral'],
+        parentSite: 'BTS-LIT-101',
+        siteCount: 10
       }
     ];
 
     initialOutages.forEach((outageData, index) => {
       const sites = alarmService.getSites();
-      const affectedSites = sites
-        .filter(site => 
-          outageData.affectedRegions.includes(site.region) &&
-          this.getParentSite(site.name) === outageData.parentSite
-        )
-        .slice(0, Math.floor(Math.random() * 8) + 5); // 5-12 sites
+      const regionSites = sites.filter(site => outageData.affectedRegions.includes(site.region));
+      const affectedSites = regionSites.slice(0, outageData.siteCount);
 
       if (affectedSites.length >= this.OUTAGE_THRESHOLD) {
+        // Mettre les sites hors ligne pour simuler la panne
+        affectedSites.forEach(site => {
+          site.status = 'offline';
+          site.lastUpdate = new Date().toISOString();
+        });
+
         const outage = this.createOutage(
           outageData.type,
           outageData.severity,
@@ -62,49 +84,134 @@ class OutageService {
         this.outages.push(outage);
       }
     });
+
+    console.log(`🚨 ${this.outages.length} pannes initiales créées pour la démonstration`);
+  }
+
+  private async generateSimulatedOutage() {
+    const sites = alarmService.getSites();
+    const onlineSites = sites.filter(site => site.status === 'online');
+    
+    if (onlineSites.length < 10) return; // Pas assez de sites en ligne
+
+    // Choisir une région aléatoire
+    const regions = [...new Set(onlineSites.map(s => s.region))];
+    const randomRegion = regions[Math.floor(Math.random() * regions.length)];
+    const regionSites = onlineSites.filter(s => s.region === randomRegion);
+
+    if (regionSites.length < this.OUTAGE_THRESHOLD) return;
+
+    // Générer une panne aléatoire
+    const outageTypes = ['power', 'transmission', 'network', 'hardware'] as const;
+    const severities = ['critical', 'major', 'minor'] as const;
+    const randomType = outageTypes[Math.floor(Math.random() * outageTypes.length)];
+    const randomSeverity = severities[Math.floor(Math.random() * severities.length)];
+
+    const outageScenarios = {
+      power: [
+        'Panne électrique généralisée',
+        'Défaillance du générateur principal',
+        'Coupure d\'alimentation secteur',
+        'Surtension destructrice'
+      ],
+      transmission: [
+        'Défaillance liaison micro-ondes',
+        'Antenne principale endommagée',
+        'Câble de transmission coupé',
+        'Interférence radio majeure'
+      ],
+      network: [
+        'Panne routeur principal',
+        'Défaillance switch central',
+        'Coupure fibre optique',
+        'Saturation réseau critique'
+      ],
+      hardware: [
+        'Défaillance serveur central',
+        'Panne climatisation datacenter',
+        'Disque dur central corrompu',
+        'Mémoire serveur défaillante'
+      ]
+    };
+
+    const scenarios = outageScenarios[randomType];
+    const randomScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+
+    // Déterminer le nombre de sites affectés selon la sévérité
+    const siteCount = randomSeverity === 'critical' ? 
+      Math.floor(Math.random() * 8) + 7 : // 7-14 sites
+      randomSeverity === 'major' ? 
+      Math.floor(Math.random() * 5) + 4 : // 4-8 sites
+      Math.floor(Math.random() * 3) + 3;  // 3-5 sites
+
+    const affectedSites = regionSites.slice(0, Math.min(siteCount, regionSites.length));
+
+    // Mettre les sites hors ligne
+    affectedSites.forEach(site => {
+      site.status = 'offline';
+      site.lastUpdate = new Date().toISOString();
+    });
+
+    const parentSite = this.getParentSite(affectedSites[0].name) || affectedSites[0].name;
+
+    const outage = await this.createOutage(
+      randomType,
+      randomSeverity,
+      `${randomScenario} - ${randomRegion}`,
+      `Panne ${randomType} affectant ${affectedSites.length} sites dans la région ${randomRegion}`,
+      affectedSites,
+      parentSite
+    );
+
+    this.outages.push(outage);
+    
+    console.log(`🚨 NOUVELLE PANNE SIMULÉE GÉNÉRÉE:`);
+    console.log(`📍 Région: ${randomRegion}`);
+    console.log(`⚡ Type: ${randomType} | Sévérité: ${randomSeverity}`);
+    console.log(`🏢 Sites affectés: ${affectedSites.length}`);
+    console.log(`🎯 Titre: ${outage.title}`);
   }
 
   private detectOutages() {
     const sites = alarmService.getSites();
     const offlineSites = sites.filter(site => site.status === 'offline');
     
-    // Grouper les sites hors ligne par site parent
-    const sitesByParent = new Map<string, Site[]>();
+    // Grouper les sites hors ligne par région
+    const sitesByRegion = new Map<string, Site[]>();
     
     offlineSites.forEach(site => {
-      const parentSite = this.getParentSite(site.name);
-      if (parentSite) {
-        if (!sitesByParent.has(parentSite)) {
-          sitesByParent.set(parentSite, []);
-        }
-        sitesByParent.get(parentSite)!.push(site);
+      if (!sitesByRegion.has(site.region)) {
+        sitesByRegion.set(site.region, []);
       }
+      sitesByRegion.get(site.region)!.push(site);
     });
 
-    // Détecter les nouvelles pannes
-    sitesByParent.forEach((sites, parentSite) => {
+    // Détecter les nouvelles pannes par région
+    sitesByRegion.forEach((sites, region) => {
       if (sites.length >= this.OUTAGE_THRESHOLD) {
-        // Vérifier si une panne existe déjà pour ce site parent
+        // Vérifier si une panne existe déjà pour cette région
         const existingOutage = this.outages.find(outage => 
-          outage.parentSite === parentSite && outage.status === 'active'
+          outage.affectedSites.some(site => site.region === region) && 
+          outage.status === 'active'
         );
 
         if (!existingOutage) {
-          // Créer une nouvelle panne
+          // Créer une nouvelle panne détectée automatiquement
           const outageType = this.determineOutageType();
           const severity = this.determineSeverity(sites.length);
+          const parentSite = this.getParentSite(sites[0].name) || sites[0].name;
           
           const outage = this.createOutage(
             outageType,
             severity,
-            `Panne ${outageType} - Site parent ${parentSite}`,
-            `Défaillance affectant ${sites.length} sites dépendants du site parent ${parentSite}`,
+            `Panne détectée automatiquement - ${region}`,
+            `Détection automatique: ${sites.length} sites hors ligne dans la région ${region}`,
             sites,
             parentSite
           );
 
           this.outages.push(outage);
-          console.log(`🚨 NOUVELLE PANNE DÉTECTÉE: ${outage.title} (${sites.length} sites)`);
+          console.log(`🤖 PANNE DÉTECTÉE AUTOMATIQUEMENT: ${outage.title} (${sites.length} sites)`);
         }
       }
     });
@@ -128,8 +235,8 @@ class OutageService {
   }
 
   private determineSeverity(affectedSitesCount: number): 'critical' | 'major' | 'minor' {
-    if (affectedSitesCount >= 15) return 'critical';
-    if (affectedSitesCount >= 10) return 'major';
+    if (affectedSitesCount >= 10) return 'critical';
+    if (affectedSitesCount >= 6) return 'major';
     return 'minor';
   }
 
@@ -185,16 +292,17 @@ class OutageService {
   private autoResolveOutages() {
     const activeOutages = this.outages.filter(o => o.status === 'active');
     
-    // Résoudre aléatoirement 1-2 pannes anciennes
+    // Résoudre aléatoirement les pannes anciennes
     activeOutages.forEach(outage => {
       const ageMinutes = (Date.now() - new Date(outage.startTime).getTime()) / 60000;
       
-      // 10% de chance de résolution après 30 minutes, augmente avec le temps
-      const resolutionChance = Math.min(0.8, (ageMinutes - 30) * 0.01);
+      // 5% de chance de résolution après 10 minutes, augmente avec le temps
+      const resolutionChance = Math.min(0.6, (ageMinutes - 10) * 0.02);
       
-      if (ageMinutes > 30 && Math.random() < resolutionChance) {
+      if (ageMinutes > 10 && Math.random() < resolutionChance) {
         outage.status = 'resolved';
         outage.endTime = new Date().toISOString();
+        outage.resolution = `Résolution automatique après ${Math.floor(ageMinutes)} minutes`;
         
         // Remettre les sites en ligne
         outage.affectedSites.forEach(affectedSite => {
@@ -205,7 +313,7 @@ class OutageService {
           }
         });
         
-        console.log(`✅ Panne auto-résolue: ${outage.title}`);
+        console.log(`✅ Panne auto-résolue: ${outage.title} (durée: ${Math.floor(ageMinutes)}min)`);
       }
     });
   }
@@ -281,6 +389,12 @@ class OutageService {
       throw new Error('Aucun site valide fourni');
     }
 
+    // Mettre les sites hors ligne
+    affectedSites.forEach(site => {
+      site.status = 'offline';
+      site.lastUpdate = new Date().toISOString();
+    });
+
     const parentSite = this.getParentSite(affectedSites[0].name) || affectedSites[0].name;
     
     const outage = await this.createOutage(
@@ -320,9 +434,19 @@ class OutageService {
     return true;
   }
 
+  // Méthode pour forcer la génération d'une panne (pour démonstration)
+  async forceGenerateOutage(): Promise<Outage | null> {
+    console.log('🎯 Génération forcée d\'une panne pour démonstration...');
+    await this.generateSimulatedOutage();
+    return this.outages[this.outages.length - 1] || null;
+  }
+
   destroy() {
     if (this.outageDetectionInterval) {
       clearInterval(this.outageDetectionInterval);
+    }
+    if (this.outageGenerationInterval) {
+      clearInterval(this.outageGenerationInterval);
     }
   }
 }
