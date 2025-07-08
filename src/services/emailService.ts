@@ -2,15 +2,15 @@ import emailjs from '@emailjs/browser';
 
 class EmailService {
   // Configuration EmailJS intégrée directement
-  private serviceId = 'service_bts_monitor';
-  private templateId = 'template_verification';
-  private publicKey = 'YOUR_EMAILJS_PUBLIC_KEY';
+  private serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID || 'service_demo';
+  private templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_demo';
+  private publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || 'demo_key';
 
   private teamEmails = {
-    ip: 'manuelmayi581@gmail.com',
-    transmission: 'manuelmayi581@gmail.com',
-    bss: 'manuelmayi581@gmail.com',
-    power: 'manuelmayi581@gmail.com'
+    ip: import.meta.env.VITE_EMAIL_IP_TEAM || 'manuelmayi581@gmail.com',
+    transmission: import.meta.env.VITE_EMAIL_TRANSMISSION_TEAM || 'manuelmayi581@gmail.com',
+    bss: import.meta.env.VITE_EMAIL_BSS_TEAM || 'manuelmayi581@gmail.com',
+    power: import.meta.env.VITE_EMAIL_POWER_TEAM || 'manuelmayi581@gmail.com'
   };
 
   // Gestion des délais pour éviter la saturation
@@ -29,16 +29,22 @@ class EmailService {
 
   private checkEmailJSAvailability() {
     try {
-      if (typeof emailjs !== 'undefined') {
-        // Utiliser une configuration de test publique
-        this.serviceId = 'service_test';
-        this.templateId = 'template_test';
-        this.publicKey = 'test_key';
+      // Vérifier si on a de vraies clés de configuration
+      const hasRealConfig = this.serviceId !== 'service_demo' && 
+                           this.templateId !== 'template_demo' && 
+                           this.publicKey !== 'demo_key';
+      
+      if (typeof emailjs !== 'undefined' && hasRealConfig) {
+        // Initialiser EmailJS avec les vraies clés
+        emailjs.init(this.publicKey);
         
-        console.log('📧 EmailJS détecté - Mode simulation activé');
+        console.log('📧 EmailJS configuré avec vraies clés - Mode RÉEL activé');
+        console.log(`🔑 Service ID: ${this.serviceId}`);
+        console.log(`📄 Template ID: ${this.templateId}`);
         this.isConfigured = true;
       } else {
-        console.log('⚠️ EmailJS non disponible - Mode simulation pure');
+        console.log('⚠️ EmailJS en mode SIMULATION - Clés de démonstration détectées');
+        console.log('💡 Pour activer les vrais emails, configurez les variables d\'environnement');
         this.isConfigured = false;
       }
     } catch (error) {
@@ -120,22 +126,29 @@ class EmailService {
 
       // Tentative d'envoi réel avec EmailJS
       try {
+        // Initialiser EmailJS si pas déjà fait
+        if (this.isConfigured && this.publicKey !== 'demo_key') {
+          emailjs.init(this.publicKey);
+        }
+        
         const result = await emailjs.send(
           this.serviceId,
           this.templateId,
           templateParams,
-          this.publicKey
+          this.publicKey !== 'demo_key' ? this.publicKey : undefined
         );
         
-        console.log(`✅ EMAIL ENVOYÉ AVEC SUCCÈS!`);
+        console.log(`✅ EMAIL RÉEL ENVOYÉ AVEC SUCCÈS!`);
         console.log(`📧 Status: ${result.status}`);
         console.log(`📧 Text: ${result.text}`);
+        console.log(`🔑 Service: ${this.serviceId}`);
         console.log(`⏰ Heure: ${new Date().toLocaleString('fr-FR')}`);
         console.log('─'.repeat(50));
         
         return true;
       } catch (emailError: any) {
-        console.log(`⚠️ EmailJS non disponible, passage en mode simulation`);
+        console.log(`⚠️ Erreur EmailJS (${emailError.status || 'unknown'}), passage en mode simulation`);
+        console.log(`📧 Erreur: ${emailError.text || emailError.message}`);
         return await this.simulateEmailSend(
           'Email avec fallback',
           templateParams.to_email,
@@ -398,9 +411,9 @@ class EmailService {
       return `🚫 Configuration EmailJS MTN - QUOTA ATTEINT (Queue: ${this.emailQueue.length} emails en attente)`;
     }
     if (!this.isConfigured) {
-      return `⚠️ EmailJS en mode simulation - Fonctionnel pour les tests (Queue: ${this.emailQueue.length} emails en attente)`;
+      return `⚠️ EmailJS en mode SIMULATION - Configurez les variables d'environnement pour les vrais emails (Queue: ${this.emailQueue.length} emails en attente)`;
     }
-    return `✅ Configuration EmailJS MTN intégrée et prête (Queue: ${this.emailQueue.length} emails en attente)`;
+    return `✅ EmailJS configuré pour VRAIS EMAILS - Service: ${this.serviceId} (Queue: ${this.emailQueue.length} emails en attente)`;
   }
 
   getQueueStats(): { pending: number; isProcessing: boolean; lastEmailTime: string; quotaReached: boolean } {
