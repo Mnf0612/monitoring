@@ -136,7 +136,18 @@ class EmailService {
       from_name: 'MTN Cameroon BTS Monitor',
       subject: `🔐 Code de vérification MTN BTS - ${code}`,
       company_name: 'MTN Cameroon',
-      system_name: 'BTS Monitor'
+      system_name: 'BTS Monitor',
+      // Ajouter les paramètres manquants pour le template
+      ticket_id: `VERIF-${Date.now()}`,
+      site_name: 'Système d\'authentification',
+      alarm_message: `Code de vérification: ${code}`,
+      team_name: 'Utilisateur',
+      status: 'VERIFICATION',
+      created_date: new Date().toLocaleString('fr-FR'),
+      priority: 'HAUTE',
+      dashboard_url: window.location.origin,
+      update_message: `Votre code de vérification est: ${code}`,
+      updated_date: new Date().toLocaleString('fr-FR')
     };
 
     console.log(`📧 Ajout d'email de vérification à la queue...`);

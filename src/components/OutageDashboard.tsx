@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { OutageMap } from './outage/OutageMap';
 import { OutageList } from './outage/OutageList';
 import { OutageStats } from './outage/OutageStats';
-import { OutageTimeline } from './outage/OutageTimeline';
+import { OutageModal } from './outage/OutageModal';
 import { outageService } from '../services/outageService';
 import { Outage } from '../types';
 import { AlertOctagon, MapPin, Clock, TrendingUp } from 'lucide-react';
@@ -94,8 +94,6 @@ export function OutageDashboard() {
               onRegionSelect={setSelectedRegion}
               onOutageSelect={setSelectedOutage}
             />
-            
-            <OutageTimeline outages={outages} />
           </div>
           
           <div>
@@ -109,6 +107,14 @@ export function OutageDashboard() {
           </div>
         </div>
       </div>
+
+      {selectedOutage && (
+        <OutageModal
+          outage={selectedOutage}
+          isOpen={!!selectedOutage}
+          onClose={() => setSelectedOutage(null)}
+        />
+      )}
     </div>
   );
 }

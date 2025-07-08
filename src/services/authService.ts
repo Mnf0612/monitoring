@@ -152,14 +152,18 @@ class AuthService {
 
   private async sendVerificationEmail(email: string, username: string, code: string): Promise<boolean> {
     try {
-      console.log(`📧 Envoi du code de vérification à ${email}`);
-      console.log(`🔐 Code: ${code}`);
-      console.log(`👤 Utilisateur: ${username}`);
-      console.log(`⏰ Expire dans 10 minutes`);
+      // Utiliser le service email réel pour envoyer le code de vérification
+      const emailSent = await emailService.sendVerificationCode(email, username, code);
+      
+      if (emailSent) {
+        console.log(`✅ Code de vérification envoyé avec succès à ${email}`);
+        console.log(`🔐 Code: ${code} (valide 10 minutes)`);
+        return true;
+      } else {
+        console.log(`❌ Échec de l'envoi du code de vérification à ${email}`);
+        return false;
+      }
 
-      // For demo purposes, we'll simulate email sending
-      // In production, you would use the actual email service
-      return true;
     } catch (error) {
       console.error('❌ Erreur lors de l\'envoi du code de vérification:', error);
       return false;
