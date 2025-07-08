@@ -258,9 +258,6 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                   <p className="text-xs text-gray-500 mt-1">
                     Le code de vérification sera envoyé à cette adresse
                   </p>
-                  <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-700">
-                    💡 <strong>Mode Démonstration:</strong> Le code sera affiché dans la console du navigateur (F12) pour les tests
-                  </div>
                 </div>
 
                 <div className="space-y-3">
@@ -299,9 +296,6 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                 <p className="text-sm font-medium text-yellow-600 mt-1">
                   {pendingVerification?.email}
                 </p>
-                <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-700">
-                  💡 <strong>Code de test:</strong> Vérifiez la console du navigateur (F12) pour voir le code généré
-                </div>
               </div>
 
               <form onSubmit={handleVerification} className="space-y-6">

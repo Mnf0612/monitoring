@@ -55,6 +55,50 @@ Un système complet de surveillance des sites BTS (Base Transceiver Station) ave
 - **SMS** via Twilio (configurable)
 - **Notifications temps réel** via WebSockets
 
+### 🔧 Configuration des Emails
+
+Le système fonctionne en **deux modes** :
+
+#### 📱 Mode Simulation (Actuel - Recommandé pour tests)
+- ✅ **Aucune configuration requise**
+- ✅ **Tests illimités** sans coûts
+- ✅ **Logs détaillés** dans la console
+- ✅ **Simulation réaliste** avec 85% de taux de succès
+- ✅ **Parfait pour démonstrations** et développement
+
+#### 🚀 Mode Production (Emails Réels)
+Pour envoyer de vrais emails, suivez ces étapes :
+
+1. **Créer un compte EmailJS** sur [EmailJS.com](https://www.emailjs.com/)
+2. **Configurer un service email** (Gmail, Outlook, etc.)
+3. **Créer un template** avec les variables du système
+4. **Obtenir vos clés** : Service ID, Template ID, Public Key
+5. **Mettre à jour la configuration** dans `src/services/emailService.ts`
+
+```javascript
+// Remplacer les valeurs de démonstration par vos vraies clés
+private serviceId = 'VOTRE_SERVICE_ID';
+private templateId = 'VOTRE_TEMPLATE_ID'; 
+private publicKey = 'VOTRE_PUBLIC_KEY';
+```
+
+#### 🔐 Codes de Vérification (Mode Test)
+En mode simulation, les codes de vérification sont affichés dans la **console du navigateur** :
+- Ouvrez les **Outils de développement** (F12)
+- Allez dans l'onglet **Console**
+- Le code apparaîtra avec le format : `🔐 Code: XXXXXX`
+
+#### 📊 Quotas EmailJS
+- **Gratuit** : 200 emails/mois
+- **Personal** : 1000 emails/mois ($15/mois)
+- **Team** : 10000 emails/mois ($50/mois)
+
+#### 🎯 Transition Automatique
+Le système détecte automatiquement :
+- **Clés de démo** → Mode simulation
+- **Vraies clés** → Envoi réel
+- **Erreur EmailJS** → Fallback vers simulation
+
 ## 📋 Prérequis
 
 ### Système
@@ -174,6 +218,25 @@ CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 | `admin` | `admin123` | Administrateur | Accès complet |
 | `operator1` | `operator123` | Opérateur | Dashboard + Tickets |
 | `tech1` | `tech123` | Technicien | Tickets assignés |
+
+### 🔐 Authentification Double Facteur
+
+#### Pour les Administrateurs
+- **Connexion directe** sans vérification email
+- Accès immédiat au système
+
+#### Pour Opérateurs et Techniciens
+- **Vérification par email** requise après connexion
+- Entrez votre email pour recevoir un code de vérification
+- **En mode test** : Le code apparaît dans la console (F12)
+- **En mode production** : Le code est envoyé par email réel
+
+#### 💡 Astuce pour les Tests
+1. Connectez-vous avec `operator1` / `operator123`
+2. Entrez n'importe quel email valide
+3. Ouvrez la console du navigateur (F12)
+4. Copiez le code affiché : `🔐 Code: XXXXXX`
+5. Collez-le dans le champ de vérification
 
 ## 📱 API Endpoints
 
