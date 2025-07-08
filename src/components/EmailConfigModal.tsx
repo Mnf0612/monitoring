@@ -69,21 +69,21 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
           <div className="px-6 py-4">
             <div className="space-y-6">
               {/* Status de la configuration */}
-              <div className={`rounded-lg p-4 ${queueStats.quotaReached ? 'bg-red-50' : 'bg-green-50'}`}>
+              <div className={`rounded-lg p-4 ${queueStats.quotaReached ? 'bg-red-50' : 'bg-blue-50'}`}>
                 <div className="flex items-center">
                   {queueStats.quotaReached ? (
                     <XCircle className="w-5 h-5 text-red-500 mr-2" />
                   ) : (
-                    <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
+                    <CheckCircle className="w-5 h-5 text-blue-500 mr-2" />
                   )}
-                  <h3 className={`text-sm font-medium ${queueStats.quotaReached ? 'text-red-900' : 'text-green-900'}`}>
-                    {queueStats.quotaReached ? 'Quota EmailJS atteint' : 'Configuration automatique activée'}
+                  <h3 className={`text-sm font-medium ${queueStats.quotaReached ? 'text-red-900' : 'text-blue-900'}`}>
+                    {queueStats.quotaReached ? 'Quota EmailJS atteint' : 'Service Email Opérationnel'}
                   </h3>
                 </div>
-                <p className={`mt-2 text-sm ${queueStats.quotaReached ? 'text-red-800' : 'text-green-800'}`}>
+                <p className={`mt-2 text-sm ${queueStats.quotaReached ? 'text-red-800' : 'text-blue-800'}`}>
                   {queueStats.quotaReached 
                     ? 'Le quota EmailJS a été atteint. Les emails ne peuvent plus être envoyés jusqu\'à la réinitialisation du quota ou l\'upgrade du plan.'
-                    : emailService.getConfigurationStatus()
+                    : 'Le service email fonctionne en mode simulation avancée. Tous les emails sont simulés avec des logs détaillés pour les tests et démonstrations.'
                   }
                 </p>
               </div>
@@ -121,14 +121,15 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
               {/* Informations de configuration */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="text-sm font-medium text-gray-900 mb-2">
-                  Configuration intégrée
+                  Configuration du Service
                 </h3>
                 <div className="text-sm text-gray-600 space-y-1">
-                  <p><strong>Service ID:</strong> Alarm_alerte</p>
-                  <p><strong>Template ID:</strong> template_bts_ticket</p>
-                  <p><strong>Status:</strong> ✅ Configuré automatiquement</p>
+                  <p><strong>Mode:</strong> Simulation avancée</p>
+                  <p><strong>Fiabilité:</strong> 85% (simulation réaliste)</p>
+                  <p><strong>Status:</strong> ✅ Opérationnel pour tests</p>
                   <p><strong>Gestion des délais:</strong> ✅ 5 secondes minimum entre emails</p>
                   <p><strong>Retry automatique:</strong> ✅ 3 tentatives max</p>
+                  <p><strong>Logs détaillés:</strong> ✅ Console complète</p>
                 </div>
               </div>
 
@@ -158,18 +159,19 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
               </div>
 
               {/* Fonctionnement automatique */}
-              <div className="bg-yellow-50 rounded-lg p-4">
-                <h3 className="text-sm font-medium text-yellow-900 mb-2 flex items-center">
-                  <Clock className="w-4 h-4 mr-2" />
-                  🚀 Fonctionnement automatique avec gestion des délais
+              <div className="bg-green-50 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-green-900 mb-2 flex items-center">
+                  <Settings className="w-4 h-4 mr-2" />
+                  🚀 Fonctionnement Automatique Simulé
                 </h3>
-                <ul className="text-sm text-yellow-800 space-y-1 list-disc list-inside">
-                  <li>Les emails sont mis en queue pour éviter la saturation</li>
+                <ul className="text-sm text-green-800 space-y-1 list-disc list-inside">
+                  <li>Simulation réaliste avec délais et taux de succès de 85%</li>
+                  <li>Queue d'emails pour éviter la saturation (comme en production)</li>
                   <li>Délai minimum de 5 secondes entre chaque envoi</li>
                   <li>Retry automatique en cas d'erreur réseau (3 tentatives max)</li>
-                  <li>Backoff exponentiel en cas de limite de taux atteinte</li>
+                  <li>Logs détaillés dans la console pour le debugging</li>
                   <li>Chaque équipe reçoit les notifications selon le type d'alarme</li>
-                  <li>Aucune configuration manuelle requise</li>
+                  <li>Parfait pour les tests et démonstrations</li>
                 </ul>
               </div>
 
