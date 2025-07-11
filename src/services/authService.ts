@@ -152,20 +152,29 @@ class AuthService {
 
   private async sendVerificationEmail(email: string, username: string, code: string): Promise<boolean> {
     try {
-      // Utiliser le service email réel pour envoyer le code de vérification
+      console.log(`📧 ENVOI CODE DE VÉRIFICATION VIA EMAILJS`);
+      console.log(`📞 Email: ${email}`);
+      console.log(`👤 Utilisateur: ${username}`);
+      console.log(`🔐 Code: ${code}`);
+      
+      // Utiliser le service email corrigé pour envoyer le code de vérification
       const emailSent = await emailService.sendVerificationCode(email, username, code);
       
       if (emailSent) {
-        console.log(`✅ Code de vérification envoyé avec succès à ${email}`);
+        console.log(`✅ CODE DE VÉRIFICATION ENVOYÉ AVEC SUCCÈS!`);
+        console.log(`📞 Destinataire: ${email}`);
         console.log(`🔐 Code: ${code} (valide 10 minutes)`);
+        console.log(`⏰ Heure: ${new Date().toLocaleString('fr-FR')}`);
         return true;
       } else {
-        console.log(`❌ Échec de l'envoi du code de vérification à ${email}`);
+        console.log(`❌ ÉCHEC DE L'ENVOI DU CODE DE VÉRIFICATION`);
+        console.log(`📞 Email: ${email}`);
+        console.log(`💡 Vérifiez la console pour plus de détails`);
         return false;
       }
 
     } catch (error) {
-      console.error('❌ Erreur lors de l\'envoi du code de vérification:', error);
+      console.error('❌ ERREUR LORS DE L\'ENVOI DU CODE DE VÉRIFICATION:', error);
       return false;
     }
   }
