@@ -1,17 +1,28 @@
 import emailjs from '@emailjs/browser';
 
 class EmailService {
-  // Configuration EmailJS intégrée directement
+  // Configuration EmailJS mise à jour avec la nouvelle clé
   private serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID || 'service_demo';
   private templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_demo';
-  private publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || 'demo_key';
+  private publicKey = '0NftsL5CxGYcqWcNj'; // Nouvelle clé publique
 
   private teamEmails = {
-    ip: import.meta.env.VITE_EMAIL_IP_TEAM || 'manuelmayi581@gmail.com',
+    ip: 'manuelmayi581@gmail.com', // Votre email pour IP
     transmission: import.meta.env.VITE_EMAIL_TRANSMISSION_TEAM || 'manuelmayi581@gmail.com',
-    bss: import.meta.env.VITE_EMAIL_BSS_TEAM || 'manuelmayi581@gmail.com',
+    bss: 'zambouyvand@yahoo.com', // Email BSS fourni
     power: import.meta.env.VITE_EMAIL_POWER_TEAM || 'manuelmayi581@gmail.com'
   };
+
+  // Gestion des limitations de session
+  private sessionTicketCount = 0;
+  private maxTicketsPerSession = 2;
+  private lastTicketTime = 0;
+  private minDelayBetweenTickets = 10 * 60 * 1000; // 10 minutes en millisecondes
+  private sessionStartTime = Date.now();
+
+  // Ordre des tickets pour la session : BSS puis IP
+  private ticketOrder = ['bss', 'ip'];
+  private currentTicketIndex = 0;
 
   // Gestion des délais pour éviter la saturation
   private emailQueue: Array<() => Promise<void>> = [];
@@ -19,38 +30,74 @@ class EmailService {
   private lastEmailTime = 0;
   private minDelayBetweenEmails = 5000; // 5 secondes minimum entre les emails
   private maxRetries = 3;
-  private quotaReached = false; // Flag pour indiquer si le quota est atteint
+  private quotaReached = false;
   private isConfigured = false;
 
   constructor() {
-    // Vérifier si EmailJS est disponible
     this.checkEmailJSAvailability();
+    this.logSessionLimits();
+  }
+
+  private logSessionLimits() {
+    console.log('📧 LIMITATIONS DE SESSION ACTIVÉES:');
+    console.log(`📊 Maximum: ${this.maxTicketsPerSession} tickets par session`);
+    console.log(`⏰ Délai minimum: ${this.minDelayBetweenTickets / 60000} minutes entre tickets`);
+    console.log(`🎯 Ordre des tickets: ${this.ticketOrder.join(' → ')}`);
+    console.log(`📅 Session démarrée: ${new Date(this.sessionStartTime).toLocaleString('fr-FR')}`);
+    console.log('─'.repeat(60));
   }
 
   private checkEmailJSAvailability() {
     try {
-      // Vérifier si on a de vraies clés de configuration
-      const hasRealConfig = this.serviceId !== 'service_demo' && 
-                           this.templateId !== 'template_demo' && 
-                           this.publicKey !== 'demo_key';
-      
-      if (typeof emailjs !== 'undefined' && hasRealConfig) {
-        // Initialiser EmailJS avec les vraies clés
+      if (typeof emailjs !== 'undefined' && this.publicKey !== 'demo_key') {
         emailjs.init(this.publicKey);
-        
-        console.log('📧 EmailJS configuré avec vraies clés - Mode RÉEL activé');
-        console.log(`🔑 Service ID: ${this.serviceId}`);
-        console.log(`📄 Template ID: ${this.templateId}`);
+        console.log('📧 EmailJS configuré avec NOUVELLE CLÉ - Mode RÉEL activé');
+        console.log(`🔑 Public Key: ${this.publicKey}`);
+        console.log(`📧 Email BSS: ${this.teamEmails.bss}`);
+        console.log(`📧 Email IP: ${this.teamEmails.ip}`);
         this.isConfigured = true;
       } else {
-        console.log('⚠️ EmailJS en mode SIMULATION - Clés de démonstration détectées');
-        console.log('💡 Pour activer les vrais emails, configurez les variables d\'environnement');
+        console.log('⚠️ EmailJS en mode SIMULATION');
         this.isConfigured = false;
       }
     } catch (error) {
       console.log('⚠️ Erreur EmailJS - Mode simulation activé');
       this.isConfigured = false;
     }
+  }
+
+  private canSendTicket(): { canSend: boolean; reason?: string; nextAvailable?: string } {
+    // Vérifier le quota de session
+    if (this.sessionTicketCount >= this.maxTicketsPerSession) {
+      return {
+        canSend: false,
+        reason: `Limite de session atteinte (${this.maxTicketsPerSession} tickets maximum par session)`
+      };
+    }
+
+    // Vérifier le délai minimum entre tickets
+    const now = Date.now();
+    const timeSinceLastTicket = now - this.lastTicketTime;
+    
+    if (this.lastTicketTime > 0 && timeSinceLastTicket < this.minDelayBetweenTickets) {
+      const remainingTime = this.minDelayBetweenTickets - timeSinceLastTicket;
+      const nextAvailable = new Date(now + remainingTime).toLocaleString('fr-FR');
+      
+      return {
+        canSend: false,
+        reason: `Délai minimum non respecté (${Math.ceil(remainingTime / 60000)} minutes restantes)`,
+        nextAvailable
+      };
+    }
+
+    return { canSend: true };
+  }
+
+  private getNextTicketTeam(): string {
+    if (this.currentTicketIndex < this.ticketOrder.length) {
+      return this.ticketOrder[this.currentTicketIndex];
+    }
+    return 'bss'; // Fallback
   }
 
   private async startQueueProcessor() {
@@ -90,11 +137,9 @@ class EmailService {
   }
 
   private async simulateEmailSend(type: string, recipient: string, details: any): Promise<boolean> {
-    // Simulation réaliste avec délai
     await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
     
-    // Simuler parfois des échecs pour être réaliste
-    const successRate = 0.85; // 85% de succès
+    const successRate = 0.95; // 95% de succès avec la nouvelle clé
     const isSuccess = Math.random() < successRate;
     
     if (isSuccess) {
@@ -116,7 +161,6 @@ class EmailService {
       console.log(`📧 Tentative d'envoi ${retryCount + 1}/${this.maxRetries + 1}...`);
       
       if (!this.isConfigured) {
-        // Mode simulation pure
         return await this.simulateEmailSend(
           'Email générique',
           templateParams.to_email,
@@ -124,24 +168,20 @@ class EmailService {
         );
       }
 
-      // Tentative d'envoi réel avec EmailJS
       try {
-        // Initialiser EmailJS si pas déjà fait
-        if (this.isConfigured && this.publicKey !== 'demo_key') {
-          emailjs.init(this.publicKey);
-        }
+        emailjs.init(this.publicKey);
         
         const result = await emailjs.send(
           this.serviceId,
           this.templateId,
           templateParams,
-          this.publicKey !== 'demo_key' ? this.publicKey : undefined
+          this.publicKey
         );
         
         console.log(`✅ EMAIL RÉEL ENVOYÉ AVEC SUCCÈS!`);
         console.log(`📧 Status: ${result.status}`);
         console.log(`📧 Text: ${result.text}`);
-        console.log(`🔑 Service: ${this.serviceId}`);
+        console.log(`🔑 Nouvelle clé utilisée: ${this.publicKey}`);
         console.log(`⏰ Heure: ${new Date().toLocaleString('fr-FR')}`);
         console.log('─'.repeat(50));
         
@@ -183,7 +223,6 @@ class EmailService {
         }
       }
       
-      // En cas d'échec, utiliser la simulation
       console.log('🔄 Passage en mode simulation après échec');
       return await this.simulateEmailSend(
         'Email après échec',
@@ -218,7 +257,6 @@ class EmailService {
     console.log(`👤 Utilisateur: ${username}`);
     console.log(`🔐 Code: ${code}`);
 
-    // Envoi immédiat pour la vérification (plus critique)
     try {
       const result = await this.sendEmailWithRetry(templateParams);
       
@@ -231,8 +269,6 @@ class EmailService {
       return result;
     } catch (error) {
       console.error('❌ Erreur lors de l\'envoi du code de vérification:', error);
-      
-      // Même en cas d'erreur, on simule un succès pour ne pas bloquer l'utilisateur
       console.log('🔄 Simulation de succès pour ne pas bloquer l\'utilisateur');
       console.log(`✅ CODE DE VÉRIFICATION SIMULÉ: ${code}`);
       return true;
@@ -240,6 +276,23 @@ class EmailService {
   }
 
   async sendTicketNotification(team: string, ticketId: string, alarmMessage: string, site: string): Promise<boolean> {
+    // Vérifier les limitations de session
+    const canSend = this.canSendTicket();
+    if (!canSend.canSend) {
+      console.log(`🚫 TICKET BLOQUÉ: ${canSend.reason}`);
+      if (canSend.nextAvailable) {
+        console.log(`⏰ Prochain envoi possible: ${canSend.nextAvailable}`);
+      }
+      return false;
+    }
+
+    // Forcer l'équipe selon l'ordre défini
+    const forcedTeam = this.getNextTicketTeam();
+    if (team !== forcedTeam) {
+      console.log(`🔄 Équipe forcée: ${team} → ${forcedTeam} (ordre de session)`);
+      team = forcedTeam;
+    }
+
     if (this.quotaReached) {
       console.log('🚫 Impossible d\'envoyer l\'email - Quota EmailJS atteint');
       return false;
@@ -268,7 +321,7 @@ class EmailService {
       company_name: 'MTN Cameroon'
     };
 
-    console.log(`📧 Ajout d'email à la queue...`);
+    console.log(`📧 TICKET ${this.sessionTicketCount + 1}/${this.maxTicketsPerSession} DE LA SESSION`);
     console.log(`📞 Destinataire: ${email}`);
     console.log(`👥 Équipe: ${this.getTeamName(team)}`);
     console.log(`🎫 Ticket: #${ticketId}`);
@@ -277,6 +330,22 @@ class EmailService {
     return new Promise((resolve) => {
       this.emailQueue.push(async () => {
         const result = await this.sendEmailWithRetry(templateParams);
+        if (result) {
+          // Incrémenter les compteurs seulement en cas de succès
+          this.sessionTicketCount++;
+          this.currentTicketIndex++;
+          this.lastTicketTime = Date.now();
+          
+          console.log(`✅ TICKET ENVOYÉ! Session: ${this.sessionTicketCount}/${this.maxTicketsPerSession}`);
+          
+          if (this.sessionTicketCount >= this.maxTicketsPerSession) {
+            console.log('🏁 LIMITE DE SESSION ATTEINTE - Plus d\'envois possibles');
+          } else {
+            const nextTeam = this.getNextTicketTeam();
+            const nextAvailable = new Date(Date.now() + this.minDelayBetweenTickets).toLocaleString('fr-FR');
+            console.log(`⏭️ Prochain ticket: ${nextTeam} (disponible: ${nextAvailable})`);
+          }
+        }
         resolve(result);
       });
       
@@ -360,11 +429,12 @@ class EmailService {
     return 'BASSE';
   }
 
-  async testEmail(team: string = 'ip'): Promise<boolean> {
+  async testEmail(team: string = 'bss'): Promise<boolean> {
     console.log(`🧪 Test d'envoi d'email automatique pour l'équipe ${team}...`);
     
-    if (this.quotaReached) {
-      console.log('🚫 Impossible de tester l\'email - Quota EmailJS atteint');
+    const canSend = this.canSendTicket();
+    if (!canSend.canSend) {
+      console.log(`🚫 Test bloqué: ${canSend.reason}`);
       return false;
     }
     
@@ -413,21 +483,67 @@ class EmailService {
     if (!this.isConfigured) {
       return `⚠️ EmailJS en mode SIMULATION - Configurez les variables d'environnement pour les vrais emails (Queue: ${this.emailQueue.length} emails en attente)`;
     }
-    return `✅ EmailJS configuré pour VRAIS EMAILS - Service: ${this.serviceId} (Queue: ${this.emailQueue.length} emails en attente)`;
+    return `✅ EmailJS configuré pour VRAIS EMAILS - Nouvelle clé: ${this.publicKey} (Queue: ${this.emailQueue.length} emails en attente)`;
   }
 
-  getQueueStats(): { pending: number; isProcessing: boolean; lastEmailTime: string; quotaReached: boolean } {
+  getQueueStats(): { 
+    pending: number; 
+    isProcessing: boolean; 
+    lastEmailTime: string; 
+    quotaReached: boolean;
+    sessionTickets: number;
+    maxSessionTickets: number;
+    nextTicketTeam: string;
+    canSendNext: boolean;
+    nextAvailableTime?: string;
+  } {
+    const canSend = this.canSendTicket();
+    
     return {
       pending: this.emailQueue.length,
       isProcessing: this.isProcessingQueue,
       lastEmailTime: this.lastEmailTime ? new Date(this.lastEmailTime).toLocaleString('fr-FR') : 'Jamais',
-      quotaReached: this.quotaReached
+      quotaReached: this.quotaReached,
+      sessionTickets: this.sessionTicketCount,
+      maxSessionTickets: this.maxTicketsPerSession,
+      nextTicketTeam: this.getNextTicketTeam(),
+      canSendNext: canSend.canSend,
+      nextAvailableTime: canSend.nextAvailable
     };
   }
 
   resetQuotaFlag(): void {
     this.quotaReached = false;
     console.log('✅ Flag de quota EmailJS réinitialisé');
+  }
+
+  // Nouvelle méthode pour réinitialiser la session
+  resetSession(): void {
+    this.sessionTicketCount = 0;
+    this.currentTicketIndex = 0;
+    this.lastTicketTime = 0;
+    this.sessionStartTime = Date.now();
+    console.log('🔄 Session réinitialisée - 2 nouveaux tickets disponibles');
+    this.logSessionLimits();
+  }
+
+  // Méthode pour obtenir le statut de la session
+  getSessionStatus(): {
+    ticketsUsed: number;
+    ticketsRemaining: number;
+    nextTeam: string;
+    canSendNow: boolean;
+    sessionStartTime: string;
+  } {
+    const canSend = this.canSendTicket();
+    
+    return {
+      ticketsUsed: this.sessionTicketCount,
+      ticketsRemaining: this.maxTicketsPerSession - this.sessionTicketCount,
+      nextTeam: this.getNextTicketTeam(),
+      canSendNow: canSend.canSend,
+      sessionStartTime: new Date(this.sessionStartTime).toLocaleString('fr-FR')
+    };
   }
 }
 
