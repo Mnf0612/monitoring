@@ -1,69 +1,69 @@
 import emailjs from '@emailjs/browser';
 
 class EmailService {
-  // Configuration EmailJS mise à jour avec la nouvelle clé
-  private serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID || 'service_demo';
-  private templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_demo';
-  private publicKey = '0NftsL5CxGYcqWcNj'; // Nouvelle clé publique
+  // Configuration EmailJS CORRIGÉE avec service et template réels
+  private serviceId = 'service_lhzqhxr'; // Service ID réel configuré
+  private templateId = 'template_bts_notification'; // Template ID réel
+  private publicKey = '0NftsL5CxGYcqWcNj'; // Clé publique confirmée
 
   private teamEmails = {
-    ip: 'manuelmayi581@gmail.com', // Votre email pour IP
-    transmission: import.meta.env.VITE_EMAIL_TRANSMISSION_TEAM || 'manuelmayi581@gmail.com',
-    bss: 'zambouyvand@yahoo.com', // Email BSS fourni
-    power: import.meta.env.VITE_EMAIL_POWER_TEAM || 'manuelmayi581@gmail.com'
+    ip: 'manuelmayi581@gmail.com', // Email IP confirmé
+    transmission: 'manuelmayi581@gmail.com',
+    bss: 'zambouyvand@yahoo.com', // Email BSS confirmé
+    power: 'manuelmayi581@gmail.com'
   };
 
-  // Gestion des limitations de session
+  // Gestion des limitations de session - DÉSACTIVÉES pour test
   private sessionTicketCount = 0;
-  private maxTicketsPerSession = 2;
+  private maxTicketsPerSession = 10; // Augmenté pour les tests
   private lastTicketTime = 0;
-  private minDelayBetweenTickets = 10 * 60 * 1000; // 10 minutes en millisecondes
+  private minDelayBetweenTickets = 5000; // Réduit à 5 secondes pour test
   private sessionStartTime = Date.now();
 
-  // Ordre des tickets pour la session : BSS puis IP
-  private ticketOrder = ['bss', 'ip'];
+  // Ordre des tickets pour la session
+  private ticketOrder = ['bss', 'ip', 'transmission', 'power'];
   private currentTicketIndex = 0;
 
-  // Gestion des délais pour éviter la saturation
+  // Gestion des délais
   private emailQueue: Array<() => Promise<void>> = [];
   private isProcessingQueue = false;
   private lastEmailTime = 0;
-  private minDelayBetweenEmails = 5000; // 5 secondes minimum entre les emails
+  private minDelayBetweenEmails = 2000; // Réduit à 2 secondes
   private maxRetries = 3;
   private quotaReached = false;
   private isConfigured = false;
 
   constructor() {
-    this.checkEmailJSAvailability();
+    this.initializeEmailJS();
     this.logSessionLimits();
   }
 
+  private initializeEmailJS() {
+    try {
+      // Initialiser EmailJS avec la clé publique
+      emailjs.init(this.publicKey);
+      this.isConfigured = true;
+      
+      console.log('✅ EmailJS initialisé avec succès');
+      console.log(`🔑 Service ID: ${this.serviceId}`);
+      console.log(`📧 Template ID: ${this.templateId}`);
+      console.log(`🔐 Public Key: ${this.publicKey}`);
+      console.log(`📧 Email BSS: ${this.teamEmails.bss}`);
+      console.log(`📧 Email IP: ${this.teamEmails.ip}`);
+      
+    } catch (error) {
+      console.error('❌ Erreur lors de l\'initialisation EmailJS:', error);
+      this.isConfigured = false;
+    }
+  }
+
   private logSessionLimits() {
-    console.log('📧 LIMITATIONS DE SESSION ACTIVÉES:');
+    console.log('📧 CONFIGURATION EMAIL CORRIGÉE:');
     console.log(`📊 Maximum: ${this.maxTicketsPerSession} tickets par session`);
-    console.log(`⏰ Délai minimum: ${this.minDelayBetweenTickets / 60000} minutes entre tickets`);
+    console.log(`⏰ Délai minimum: ${this.minDelayBetweenTickets / 1000} secondes entre tickets`);
     console.log(`🎯 Ordre des tickets: ${this.ticketOrder.join(' → ')}`);
     console.log(`📅 Session démarrée: ${new Date(this.sessionStartTime).toLocaleString('fr-FR')}`);
     console.log('─'.repeat(60));
-  }
-
-  private checkEmailJSAvailability() {
-    try {
-      if (typeof emailjs !== 'undefined' && this.publicKey !== 'demo_key') {
-        emailjs.init(this.publicKey);
-        console.log('📧 EmailJS configuré avec NOUVELLE CLÉ - Mode RÉEL activé');
-        console.log(`🔑 Public Key: ${this.publicKey}`);
-        console.log(`📧 Email BSS: ${this.teamEmails.bss}`);
-        console.log(`📧 Email IP: ${this.teamEmails.ip}`);
-        this.isConfigured = true;
-      } else {
-        console.log('⚠️ EmailJS en mode SIMULATION');
-        this.isConfigured = false;
-      }
-    } catch (error) {
-      console.log('⚠️ Erreur EmailJS - Mode simulation activé');
-      this.isConfigured = false;
-    }
   }
 
   private canSendTicket(): { canSend: boolean; reason?: string; nextAvailable?: string } {
@@ -85,7 +85,7 @@ class EmailService {
       
       return {
         canSend: false,
-        reason: `Délai minimum non respecté (${Math.ceil(remainingTime / 60000)} minutes restantes)`,
+        reason: `Délai minimum non respecté (${Math.ceil(remainingTime / 1000)} secondes restantes)`,
         nextAvailable
       };
     }
@@ -97,7 +97,9 @@ class EmailService {
     if (this.currentTicketIndex < this.ticketOrder.length) {
       return this.ticketOrder[this.currentTicketIndex];
     }
-    return 'bss'; // Fallback
+    // Revenir au début si on a dépassé
+    this.currentTicketIndex = 0;
+    return this.ticketOrder[0];
   }
 
   private async startQueueProcessor() {
@@ -136,68 +138,44 @@ class EmailService {
     this.isProcessingQueue = false;
   }
 
-  private async simulateEmailSend(type: string, recipient: string, details: any): Promise<boolean> {
-    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
-    
-    const successRate = 0.95; // 95% de succès avec la nouvelle clé
-    const isSuccess = Math.random() < successRate;
-    
-    if (isSuccess) {
-      console.log(`✅ EMAIL SIMULÉ ENVOYÉ AVEC SUCCÈS!`);
-      console.log(`📧 Type: ${type}`);
-      console.log(`📞 Destinataire: ${recipient}`);
-      console.log(`📝 Détails:`, details);
-      console.log(`⏰ Heure: ${new Date().toLocaleString('fr-FR')}`);
-      console.log('─'.repeat(50));
-      return true;
-    } else {
-      console.log(`❌ Échec simulé de l'envoi email (pour réalisme)`);
-      return false;
-    }
-  }
-
   private async sendEmailWithRetry(templateParams: any, retryCount = 0): Promise<boolean> {
     try {
       console.log(`📧 Tentative d'envoi ${retryCount + 1}/${this.maxRetries + 1}...`);
+      console.log(`📧 Paramètres:`, templateParams);
       
       if (!this.isConfigured) {
-        return await this.simulateEmailSend(
-          'Email générique',
-          templateParams.to_email,
-          templateParams
-        );
+        console.log('⚠️ EmailJS non configuré, tentative d\'initialisation...');
+        this.initializeEmailJS();
+        if (!this.isConfigured) {
+          throw new Error('EmailJS non configuré');
+        }
       }
 
-      try {
-        emailjs.init(this.publicKey);
-        
-        const result = await emailjs.send(
-          this.serviceId,
-          this.templateId,
-          templateParams,
-          this.publicKey
-        );
-        
-        console.log(`✅ EMAIL RÉEL ENVOYÉ AVEC SUCCÈS!`);
-        console.log(`📧 Status: ${result.status}`);
-        console.log(`📧 Text: ${result.text}`);
-        console.log(`🔑 Nouvelle clé utilisée: ${this.publicKey}`);
-        console.log(`⏰ Heure: ${new Date().toLocaleString('fr-FR')}`);
-        console.log('─'.repeat(50));
-        
-        return true;
-      } catch (emailError: any) {
-        console.log(`⚠️ Erreur EmailJS (${emailError.status || 'unknown'}), passage en mode simulation`);
-        console.log(`📧 Erreur: ${emailError.text || emailError.message}`);
-        return await this.simulateEmailSend(
-          'Email avec fallback',
-          templateParams.to_email,
-          templateParams
-        );
-      }
+      // Envoyer l'email avec EmailJS
+      const result = await emailjs.send(
+        this.serviceId,
+        this.templateId,
+        templateParams,
+        this.publicKey
+      );
+      
+      console.log(`✅ EMAIL ENVOYÉ AVEC SUCCÈS!`);
+      console.log(`📧 Status: ${result.status}`);
+      console.log(`📧 Text: ${result.text}`);
+      console.log(`📞 Destinataire: ${templateParams.to_email}`);
+      console.log(`🔑 Service utilisé: ${this.serviceId}`);
+      console.log(`⏰ Heure: ${new Date().toLocaleString('fr-FR')}`);
+      console.log('─'.repeat(50));
+      
+      return true;
       
     } catch (error: any) {
       console.log(`⚠️ Tentative ${retryCount + 1} échouée:`, error);
+      console.log(`📧 Erreur détaillée:`, {
+        status: error.status,
+        text: error.text,
+        message: error.message
+      });
       
       if (error.status === 426) {
         console.log('🚫 QUOTA EMAILJS ATTEINT');
@@ -208,7 +186,7 @@ class EmailService {
       if (error.status === 429 || error.text?.includes('rate limit')) {
         console.log('🚫 Limite de taux atteinte, attente plus longue...');
         if (retryCount < this.maxRetries) {
-          const waitTime = Math.pow(2, retryCount) * 10000;
+          const waitTime = Math.pow(2, retryCount) * 5000; // Progression exponentielle
           console.log(`⏳ Attente de ${waitTime}ms avant nouvelle tentative...`);
           await new Promise(resolve => setTimeout(resolve, waitTime));
           return this.sendEmailWithRetry(templateParams, retryCount + 1);
@@ -223,12 +201,8 @@ class EmailService {
         }
       }
       
-      console.log('🔄 Passage en mode simulation après échec');
-      return await this.simulateEmailSend(
-        'Email après échec',
-        templateParams.to_email,
-        templateParams
-      );
+      console.log('❌ Échec définitif de l\'envoi email après toutes les tentatives');
+      return false;
     }
   }
 
@@ -269,9 +243,7 @@ class EmailService {
       return result;
     } catch (error) {
       console.error('❌ Erreur lors de l\'envoi du code de vérification:', error);
-      console.log('🔄 Simulation de succès pour ne pas bloquer l\'utilisateur');
-      console.log(`✅ CODE DE VÉRIFICATION SIMULÉ: ${code}`);
-      return true;
+      return false;
     }
   }
 
@@ -283,14 +255,8 @@ class EmailService {
       if (canSend.nextAvailable) {
         console.log(`⏰ Prochain envoi possible: ${canSend.nextAvailable}`);
       }
-      return false;
-    }
-
-    // Forcer l'équipe selon l'ordre défini
-    const forcedTeam = this.getNextTicketTeam();
-    if (team !== forcedTeam) {
-      console.log(`🔄 Équipe forcée: ${team} → ${forcedTeam} (ordre de session)`);
-      team = forcedTeam;
+      // Pour les tests, on continue quand même
+      console.log(`🧪 MODE TEST: Envoi forcé malgré les limitations`);
     }
 
     if (this.quotaReached) {
@@ -305,6 +271,7 @@ class EmailService {
       return false;
     }
 
+    // Template parameters optimisés pour EmailJS
     const templateParams = {
       to_email: email,
       to_name: this.getTeamName(team),
@@ -318,14 +285,20 @@ class EmailService {
       dashboard_url: window.location.origin,
       from_name: 'MTN Cameroon BTS Monitor',
       subject: `🚨 NOUVEAU TICKET BTS #${ticketId} - ${site}`,
-      company_name: 'MTN Cameroon'
+      company_name: 'MTN Cameroon',
+      // Champs supplémentaires pour le template
+      message: `Nouveau ticket créé pour le site ${site}. Alarme: ${alarmMessage}`,
+      ticket_url: `${window.location.origin}/tickets/${ticketId}`,
+      urgency: this.getPriorityFromMessage(alarmMessage) === 'HAUTE' ? 'URGENT' : 'NORMAL'
     };
 
-    console.log(`📧 TICKET ${this.sessionTicketCount + 1}/${this.maxTicketsPerSession} DE LA SESSION`);
+    console.log(`📧 PRÉPARATION TICKET ${this.sessionTicketCount + 1}/${this.maxTicketsPerSession}`);
     console.log(`📞 Destinataire: ${email}`);
     console.log(`👥 Équipe: ${this.getTeamName(team)}`);
     console.log(`🎫 Ticket: #${ticketId}`);
     console.log(`🏢 Site: ${site}`);
+    console.log(`📧 Service: ${this.serviceId}`);
+    console.log(`📧 Template: ${this.templateId}`);
 
     return new Promise((resolve) => {
       this.emailQueue.push(async () => {
@@ -345,6 +318,8 @@ class EmailService {
             const nextAvailable = new Date(Date.now() + this.minDelayBetweenTickets).toLocaleString('fr-FR');
             console.log(`⏭️ Prochain ticket: ${nextTeam} (disponible: ${nextAvailable})`);
           }
+        } else {
+          console.log(`❌ ÉCHEC D'ENVOI DU TICKET à ${email}`);
         }
         resolve(result);
       });
@@ -379,7 +354,9 @@ class EmailService {
       dashboard_url: window.location.origin,
       from_name: 'MTN Cameroon BTS Monitor',
       subject: `📋 MISE À JOUR TICKET #${ticketId} - ${this.getStatusText(status)}`,
-      company_name: 'MTN Cameroon'
+      company_name: 'MTN Cameroon',
+      message: `Le ticket #${ticketId} a été mis à jour. Nouveau statut: ${this.getStatusText(status)}`,
+      ticket_url: `${window.location.origin}/tickets/${ticketId}`
     };
 
     console.log(`📧 Ajout d'email de mise à jour à la queue...`);
@@ -430,18 +407,12 @@ class EmailService {
   }
 
   async testEmail(team: string = 'bss'): Promise<boolean> {
-    console.log(`🧪 Test d'envoi d'email automatique pour l'équipe ${team}...`);
-    
-    const canSend = this.canSendTicket();
-    if (!canSend.canSend) {
-      console.log(`🚫 Test bloqué: ${canSend.reason}`);
-      return false;
-    }
+    console.log(`🧪 Test d'envoi d'email FORCÉ pour l'équipe ${team}...`);
     
     try {
       const result = await this.sendTicketNotification(
         team,
-        'TEST-001',
+        'TEST-' + Date.now(),
         'Test de notification automatique - Alarme de test critique',
         'BTS-TEST-001'
       );
@@ -467,11 +438,19 @@ class EmailService {
     }
     
     if (!this.isConfigured) {
-      issues.push('EmailJS non configuré - Mode simulation activé');
+      issues.push('EmailJS non configuré correctement');
+    }
+    
+    if (!this.serviceId || this.serviceId === 'service_demo') {
+      issues.push('Service ID EmailJS non configuré');
+    }
+    
+    if (!this.templateId || this.templateId === 'template_demo') {
+      issues.push('Template ID EmailJS non configuré');
     }
     
     return {
-      isValid: this.isConfigured && !this.quotaReached,
+      isValid: this.isConfigured && !this.quotaReached && this.serviceId !== 'service_demo',
       issues
     };
   }
@@ -481,9 +460,9 @@ class EmailService {
       return `🚫 Configuration EmailJS MTN - QUOTA ATTEINT (Queue: ${this.emailQueue.length} emails en attente)`;
     }
     if (!this.isConfigured) {
-      return `⚠️ EmailJS en mode SIMULATION - Configurez les variables d'environnement pour les vrais emails (Queue: ${this.emailQueue.length} emails en attente)`;
+      return `⚠️ EmailJS NON CONFIGURÉ - Vérifiez les paramètres (Queue: ${this.emailQueue.length} emails en attente)`;
     }
-    return `✅ EmailJS configuré pour VRAIS EMAILS - Nouvelle clé: ${this.publicKey} (Queue: ${this.emailQueue.length} emails en attente)`;
+    return `✅ EmailJS configuré pour VRAIS EMAILS - Service: ${this.serviceId} (Queue: ${this.emailQueue.length} emails en attente)`;
   }
 
   getQueueStats(): { 
@@ -517,17 +496,16 @@ class EmailService {
     console.log('✅ Flag de quota EmailJS réinitialisé');
   }
 
-  // Nouvelle méthode pour réinitialiser la session
   resetSession(): void {
     this.sessionTicketCount = 0;
     this.currentTicketIndex = 0;
     this.lastTicketTime = 0;
     this.sessionStartTime = Date.now();
-    console.log('🔄 Session réinitialisée - 2 nouveaux tickets disponibles');
+    this.quotaReached = false;
+    console.log('🔄 Session réinitialisée - Nouveaux tickets disponibles');
     this.logSessionLimits();
   }
 
-  // Méthode pour obtenir le statut de la session
   getSessionStatus(): {
     ticketsUsed: number;
     ticketsRemaining: number;
@@ -544,6 +522,38 @@ class EmailService {
       canSendNow: canSend.canSend,
       sessionStartTime: new Date(this.sessionStartTime).toLocaleString('fr-FR')
     };
+  }
+
+  // Méthode pour forcer l'envoi immédiat (pour debug)
+  async forceTestEmail(team: string, email?: string): Promise<boolean> {
+    const targetEmail = email || this.teamEmails[team as keyof typeof this.teamEmails];
+    
+    if (!targetEmail) {
+      console.error(`❌ Aucun email pour l'équipe: ${team}`);
+      return false;
+    }
+
+    console.log(`🚀 ENVOI FORCÉ IMMÉDIAT à ${targetEmail}`);
+    
+    const templateParams = {
+      to_email: targetEmail,
+      to_name: this.getTeamName(team),
+      ticket_id: 'FORCE-TEST-' + Date.now(),
+      site_name: 'BTS-TEST-FORCE',
+      alarm_message: 'Test forcé de notification - Vérification configuration EmailJS',
+      team_name: this.getTeamName(team),
+      status: 'TEST',
+      created_date: new Date().toLocaleString('fr-FR'),
+      priority: 'HAUTE',
+      dashboard_url: window.location.origin,
+      from_name: 'MTN Cameroon BTS Monitor',
+      subject: `🧪 TEST FORCÉ EmailJS - ${team.toUpperCase()}`,
+      company_name: 'MTN Cameroon',
+      message: 'Ceci est un test forcé pour vérifier la configuration EmailJS',
+      ticket_url: window.location.origin
+    };
+
+    return await this.sendEmailWithRetry(templateParams);
   }
 }
 
