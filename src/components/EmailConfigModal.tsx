@@ -44,6 +44,7 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
   };
 
   const queueStats = emailService.getQueueStats();
+  const sessionStatus = emailService.getSessionStatus();
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -68,6 +69,44 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
 
           <div className="px-6 py-4">
             <div className="space-y-6">
+              {/* Statut de la session avec limitations */}
+              <div className="bg-blue-50 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-blue-900 mb-2 flex items-center">
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  Statut de la Session (Limitations Activées)
+                </h3>
+                <div className="text-sm text-blue-800 space-y-2">
+                  <div className="flex justify-between">
+                    <span>Tickets utilisés :</span>
+                    <span className="font-bold">{sessionStatus.ticketsUsed}/{sessionStatus.ticketsRemaining + sessionStatus.ticketsUsed}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Tickets restants :</span>
+                    <span className={`font-bold ${sessionStatus.ticketsRemaining > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {sessionStatus.ticketsRemaining}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Prochain ticket :</span>
+                    <span className="font-bold uppercase">{sessionStatus.nextTeam}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Peut envoyer maintenant :</span>
+                    <span className={`font-bold ${sessionStatus.canSendNow ? 'text-green-600' : 'text-red-600'}`}>
+                      {sessionStatus.canSendNow ? 'OUI' : 'NON'}
+                    </span>
+                  </div>
+                  <div className="pt-2 border-t border-blue-200">
+                    <div className="text-xs text-blue-600">
+                      Session démarrée : {sessionStatus.sessionStartTime}
+                    </div>
+                    <div className="text-xs text-blue-600 mt-1">
+                      Ordre des tickets : BSS → IP (10min entre chaque)
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Status de la configuration */}
               <div className={`rounded-lg p-4 ${queueStats.quotaReached ? 'bg-red-50' : 'bg-blue-50'}`}>
                 <div className="flex items-center">
@@ -77,13 +116,13 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
                     <CheckCircle className="w-5 h-5 text-blue-500 mr-2" />
                   )}
                   <h3 className={`text-sm font-medium ${queueStats.quotaReached ? 'text-red-900' : 'text-blue-900'}`}>
-                    {queueStats.quotaReached ? 'Quota EmailJS atteint' : 'Service Email Opérationnel'}
+                    {queueStats.quotaReached ? 'Quota EmailJS atteint' : 'Service Email Opérationnel (NOUVELLE CLÉ)'}
                   </h3>
                 </div>
                 <p className={`mt-2 text-sm ${queueStats.quotaReached ? 'text-red-800' : 'text-blue-800'}`}>
                   {queueStats.quotaReached 
-                    ? 'Le quota EmailJS a été atteint. Les emails ne peuvent plus être envoyés jusqu\'à la réinitialisation du quota ou l\'upgrade du plan.'
-                    : 'Le service email fonctionne en mode simulation avancée. Tous les emails sont simulés avec des logs détaillés pour les tests et démonstrations.'
+                    ? 'Le quota EmailJS a été atteint. Réinitialisez le quota ou attendez le renouvellement.'
+                    : 'Service configuré avec la NOUVELLE CLÉ EmailJS. Limitations : 2 tickets max par session (BSS puis IP), 10min entre chaque.'
                   }
                 </p>
               </div>
@@ -115,6 +154,16 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
                       {queueStats.quotaReached ? 'Oui' : 'Non'}
                     </span>
                   </div>
+                  <div className="flex justify-between">
+                    <span>Prochain ticket :</span>
+                    <span className="font-medium uppercase">{queueStats.nextTicketTeam}</span>
+                  </div>
+                  {queueStats.nextAvailableTime && (
+                    <div className="flex justify-between">
+                      <span>Disponible à :</span>
+                      <span className="font-medium text-orange-600">{queueStats.nextAvailableTime}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -124,10 +173,11 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
                   Configuration du Service
                 </h3>
                 <div className="text-sm text-gray-600 space-y-1">
-                  <p><strong>Mode:</strong> Simulation avancée</p>
-                  <p><strong>Fiabilité:</strong> 85% (simulation réaliste)</p>
-                  <p><strong>Status:</strong> ✅ Opérationnel pour tests</p>
-                  <p><strong>Gestion des délais:</strong> ✅ 5 secondes minimum entre emails</p>
+                  <p><strong>Mode:</strong> RÉEL avec nouvelle clé EmailJS</p>
+                  <p><strong>Clé publique:</strong> 0NftsL5CxGYcqWcNj</p>
+                  <p><strong>Limitations:</strong> ✅ 2 tickets max par session</p>
+                  <p><strong>Délai tickets:</strong> ✅ 10 minutes minimum</p>
+                  <p><strong>Ordre forcé:</strong> ✅ BSS → IP</p>
                   <p><strong>Retry automatique:</strong> ✅ 3 tentatives max</p>
                   <p><strong>Logs détaillés:</strong> ✅ Console complète</p>
                 </div>
@@ -136,7 +186,7 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
               {/* Emails des équipes */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="text-sm font-medium text-gray-900 mb-3">
-                  Emails configurés pour les équipes
+                  Emails configurés (NOUVEAUX)
                 </h3>
                 <div className="space-y-2 text-sm text-gray-600">
                   <div className="flex justify-between">
@@ -144,11 +194,11 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
                     <span className="font-medium">manuelmayi581@gmail.com</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>📧 Équipe Transmission:</span>
-                    <span className="font-medium">manuelmayi581@gmail.com</span>
+                    <span>📧 Équipe BSS:</span>
+                    <span className="font-medium text-green-600">zambouyvand@yahoo.com</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>📧 Équipe BSS:</span>
+                    <span>📧 Équipe Transmission:</span>
                     <span className="font-medium">manuelmayi581@gmail.com</span>
                   </div>
                   <div className="flex justify-between">
@@ -159,19 +209,19 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
               </div>
 
               {/* Fonctionnement automatique */}
-              <div className="bg-green-50 rounded-lg p-4">
-                <h3 className="text-sm font-medium text-green-900 mb-2 flex items-center">
+              <div className="bg-orange-50 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-orange-900 mb-2 flex items-center">
                   <Settings className="w-4 h-4 mr-2" />
-                  🚀 Fonctionnement Automatique Simulé
+                  🚀 Fonctionnement avec Limitations
                 </h3>
-                <ul className="text-sm text-green-800 space-y-1 list-disc list-inside">
-                  <li>Simulation réaliste avec délais et taux de succès de 85%</li>
-                  <li>Queue d'emails pour éviter la saturation (comme en production)</li>
-                  <li>Délai minimum de 5 secondes entre chaque envoi</li>
-                  <li>Retry automatique en cas d'erreur réseau (3 tentatives max)</li>
-                  <li>Logs détaillés dans la console pour le debugging</li>
-                  <li>Chaque équipe reçoit les notifications selon le type d'alarme</li>
-                  <li>Parfait pour les tests et démonstrations</li>
+                <ul className="text-sm text-orange-800 space-y-1 list-disc list-inside">
+                  <li><strong>LIMITATION:</strong> Maximum 2 tickets par session</li>
+                  <li><strong>ORDRE FORCÉ:</strong> 1er ticket = BSS, 2ème ticket = IP</li>
+                  <li><strong>DÉLAI:</strong> 10 minutes minimum entre chaque ticket</li>
+                  <li><strong>EMAILS RÉELS:</strong> Envoi avec nouvelle clé EmailJS</li>
+                  <li><strong>PROTECTION:</strong> Évite le dépassement de quota</li>
+                  <li><strong>RESET:</strong> Rechargez la page pour nouvelle session</li>
+                  <li><strong>LOGS:</strong> Suivi détaillé dans la console</li>
                 </ul>
               </div>
 
@@ -216,6 +266,17 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
                 >
                   <Settings className="w-4 h-4 mr-2" />
                   Fermer
+                </button>
+                
+                <button
+                  onClick={() => {
+                    emailService.resetSession();
+                    window.location.reload();
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 flex items-center"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Nouvelle Session
                 </button>
               </div>
             </div>
