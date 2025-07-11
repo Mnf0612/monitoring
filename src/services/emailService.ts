@@ -1,13 +1,13 @@
 import emailjs from '@emailjs/browser';
 
 class EmailService {
-  // Configuration EmailJS - Utilisation de vos vraies clés
-  private serviceId = 'service_lhzqhxr';
-  private templateId = 'template_bts_notification';
-  private publicKey = '0NftsL5CxGYcqWcNj';
+  // Configuration EmailJS - CORRECTION DES CLÉS
+  private serviceId = 'service_lhzqhxr';        // Vérifiez sur dashboard.emailjs.com
+  private templateId = 'template_bts_notification'; // Vérifiez que ce template existe
+  private publicKey = '0NftsL5CxGYcqWcNj';     // Votre clé publique
 
-  // Template spécifique pour les codes de vérification
-  private verificationTemplateId = 'template_verification';
+  // Template par défaut pour tous les emails
+  private defaultTemplateId = 'template_bts_notification';
 
   private teamEmails = {
     ip: 'manuelmayi581@gmail.com',
@@ -31,10 +31,11 @@ class EmailService {
 
   private initializeEmailJS() {
     try {
-      console.log('🔧 INITIALISATION EMAILJS AVEC VOS CLÉS');
+      console.log('🔧 INITIALISATION EMAILJS - VÉRIFICATION DES CLÉS');
       console.log(`Service ID: ${this.serviceId}`);
       console.log(`Template ID: ${this.templateId}`);
       console.log(`Public Key: ${this.publicKey}`);
+      console.log('🔗 Vérifiez ces valeurs sur: https://dashboard.emailjs.com/admin');
       
       // Initialiser EmailJS avec votre clé publique
       emailjs.init(this.publicKey);
@@ -111,7 +112,7 @@ class EmailService {
 
   private async sendVerificationCodeDirect(params: { email: string; username: string; code: string }): Promise<boolean> {
     if (!this.isConfigured) {
-      console.log('❌ EmailJS non configuré');
+      console.log('❌ EmailJS non configuré - Vérifiez vos clés');
       return false;
     }
 
@@ -143,6 +144,7 @@ L'équipe MTN Cameroun`,
 
     try {
       console.log('🚀 Envoi code de vérification...');
+      console.log('📋 Paramètres du template:', templateParams);
       
       const result = await emailjs.send(
         this.serviceId,
@@ -181,7 +183,7 @@ L'équipe MTN Cameroun`,
 
   private async sendTicketNotificationDirect(params: { team: string; ticketId: string; alarmMessage: string; site: string }): Promise<boolean> {
     if (!this.isConfigured) {
-      console.log('❌ EmailJS non configuré');
+      console.log('❌ EmailJS non configuré - Vérifiez vos clés sur dashboard.emailjs.com');
       return false;
     }
 
@@ -227,6 +229,9 @@ MTN Cameroun - BTS Monitor`,
 
     try {
       console.log('🚀 Envoi notification ticket...');
+      console.log('🔧 Service ID utilisé:', this.serviceId);
+      console.log('🔧 Template ID utilisé:', this.templateId);
+      console.log('📋 Paramètres du template:', templateParams);
       
       const result = await emailjs.send(
         this.serviceId,
@@ -333,6 +338,13 @@ MTN Cameroun - BTS Monitor`,
       console.log(`   - Service ID: ${this.serviceId}`);
       console.log(`   - Template ID: ${this.templateId}`);
       console.log('   - Que le template existe dans votre dashboard EmailJS');
+    } else if (error.status === 400) {
+      console.log('❌ DIAGNOSTIC: Service ID non trouvé ou invalide');
+      console.log('🔧 ACTIONS À FAIRE:');
+      console.log('   1. Allez sur https://dashboard.emailjs.com/admin');
+      console.log('   2. Vérifiez votre Service ID dans la section "Email Services"');
+      console.log('   3. Vérifiez que le service est actif');
+      console.log(`   4. Service ID actuel: ${this.serviceId}`);
     } else if (error.status === 401 || error.status === 403) {
       console.log('❌ DIAGNOSTIC: Problème d\'authentification');
       console.log(`🔧 Vérifiez votre clé publique: ${this.publicKey}`);
@@ -369,7 +381,11 @@ MTN Cameroun - BTS Monitor`,
 
   // Test avec vos vraies clés
   async testEmail(team: string = 'ip'): Promise<boolean> {
-    console.log(`🧪 TEST EMAIL AVEC VOS CLÉS - Équipe: ${team}`);
+    console.log(`🧪 TEST EMAIL - DIAGNOSTIC COMPLET`);
+    console.log(`👥 Équipe: ${team}`);
+    console.log(`🔧 Service ID: ${this.serviceId}`);
+    console.log(`🔧 Template ID: ${this.templateId}`);
+    console.log(`🔧 Public Key: ${this.publicKey}`);
     
     const email = this.teamEmails[team as keyof typeof this.teamEmails];
     console.log(`📞 Email de test: ${email}`);
@@ -398,6 +414,7 @@ MTN Cameroun - BTS Monitor`,
 
     try {
       console.log('🚀 Envoi du test avec vos clés...');
+      console.log('📋 Template params:', templateParams);
       
       const result = await emailjs.send(
         this.serviceId,
@@ -412,6 +429,7 @@ MTN Cameroun - BTS Monitor`,
       
     } catch (error: any) {
       console.log('❌ TEST EMAIL ÉCHOUÉ');
+      console.log('🔧 Vérifiez vos clés sur: https://dashboard.emailjs.com/admin');
       this.logDetailedError(error);
       return false;
     }
@@ -486,9 +504,58 @@ MTN Cameroun - BTS Monitor`,
     const config = this.checkConfiguration();
     
     if (config.isValid) {
-      return `✅ EmailJS configuré avec vos clés - Service: ${this.serviceId}`;
+      return `✅ EmailJS configuré - Service: ${this.serviceId} | Template: ${this.templateId}`;
     } else {
       return `❌ Problèmes: ${config.issues.join(', ')}`;
+    }
+  }
+
+  // Nouvelle méthode pour vérifier la configuration EmailJS
+  async verifyEmailJSConfiguration(): Promise<{ success: boolean; message: string }> {
+    console.log('🔍 VÉRIFICATION DE LA CONFIGURATION EMAILJS');
+    console.log('🔗 Dashboard: https://dashboard.emailjs.com/admin');
+    console.log(`🔧 Service ID: ${this.serviceId}`);
+    console.log(`🔧 Template ID: ${this.templateId}`);
+    console.log(`🔧 Public Key: ${this.publicKey}`);
+    
+    try {
+      // Test simple avec paramètres minimaux
+      const testParams = {
+        to_email: 'manuelmayi581@gmail.com',
+        to_name: 'Test User',
+        message: 'Test de configuration EmailJS',
+        from_name: 'BTS Monitor Test'
+      };
+      
+      const result = await emailjs.send(
+        this.serviceId,
+        this.templateId,
+        testParams,
+        this.publicKey
+      );
+      
+      return {
+        success: true,
+        message: `✅ Configuration EmailJS valide! Status: ${result.status}`
+      };
+      
+    } catch (error: any) {
+      let message = '❌ Configuration EmailJS invalide: ';
+      
+      if (error.status === 400) {
+        message += 'Service ID non trouvé. Vérifiez sur dashboard.emailjs.com';
+      } else if (error.status === 404) {
+        message += 'Template ID non trouvé. Créez le template sur dashboard.emailjs.com';
+      } else if (error.status === 401 || error.status === 403) {
+        message += 'Clé publique invalide. Vérifiez votre Public Key';
+      } else {
+        message += error.text || error.message || 'Erreur inconnue';
+      }
+      
+      return {
+        success: false,
+        message
+      };
     }
   }
 }

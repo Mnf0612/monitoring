@@ -10,6 +10,7 @@ interface EmailConfigModalProps {
 export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
   const [isTestingEmail, setIsTestingEmail] = useState(false);
   const [isTestingVerification, setIsTestingVerification] = useState(false);
+  const [isVerifyingConfig, setIsVerifyingConfig] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [testEmail, setTestEmail] = useState('manuelmayi581@gmail.com');
 
@@ -59,6 +60,26 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
     }
   };
 
+  const handleVerifyConfig = async () => {
+    setIsVerifyingConfig(true);
+    setTestResult(null);
+    
+    try {
+      const result = await emailService.verifyEmailJSConfiguration();
+      setTestResult({
+        success: result.success,
+        message: result.message
+      });
+    } catch (error) {
+      setTestResult({
+        success: false,
+        message: 'Erreur lors de la vérification de la configuration.'
+      });
+    } finally {
+      setIsVerifyingConfig(false);
+    }
+  };
+
   const queueStats = emailService.getQueueStats();
   const sessionStatus = emailService.getSessionStatus();
   const configStatus = emailService.getConfigurationStatus();
@@ -98,25 +119,39 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
               {/* Configuration actuelle */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="text-sm font-medium text-gray-900 mb-3">
-                  Configuration Actuelle (Vos Clés)
+                  Configuration EmailJS - À Vérifier
                 </h3>
                 <div className="space-y-2 text-sm text-gray-600">
                   <div className="flex justify-between">
                     <span>Service ID:</span>
-                    <span className="font-mono text-green-600">service_lhzqhxr</span>
+                    <span className="font-mono text-blue-600">service_lhzqhxr</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Template ID:</span>
-                    <span className="font-mono text-green-600">template_bts_notification</span>
+                    <span className="font-mono text-blue-600">template_bts_notification</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Clé publique:</span>
-                    <span className="font-mono text-green-600">0NftsL5CxGYcqWcNj</span>
+                    <span className="font-mono text-blue-600">0NftsL5CxGYcqWcNj</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Mode:</span>
-                    <span className="font-bold text-green-600">PRODUCTION (Vraies clés)</span>
+                    <span>Dashboard:</span>
+                    <a href="https://dashboard.emailjs.com/admin" target="_blank" rel="noopener noreferrer" 
+                       className="text-blue-600 hover:text-blue-800 underline text-xs">
+                      Vérifier sur EmailJS
+                    </a>
                   </div>
+                </div>
+                
+                <div className="mt-4">
+                  <button
+                    onClick={handleVerifyConfig}
+                    disabled={isVerifyingConfig}
+                    className="w-full px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    {isVerifyingConfig ? 'Vérification...' : 'Vérifier Configuration EmailJS'}
+                  </button>
                 </div>
               </div>
 
@@ -258,13 +293,26 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
               {/* Instructions */}
               <div className="bg-blue-50 rounded-lg p-4">
                 <h3 className="text-sm font-medium text-blue-900 mb-2">
-                  📋 Instructions d'Utilisation
+                  🔧 Instructions de Configuration
                 </h3>
                 <div className="text-sm text-blue-800 space-y-2">
-                  <p><strong>1. Codes de vérification:</strong> Connectez-vous avec operator1/operator123 ou tech1/tech123</p>
-                  <p><strong>2. Notifications tickets:</strong> Les alarmes génèrent automatiquement des tickets avec emails</p>
-                  <p><strong>3. Tests:</strong> Utilisez les boutons ci-dessus pour tester l'envoi</p>
-                  <p><strong>4. Logs:</strong> Ouvrez la console (F12) pour voir les détails d'envoi</p>
+                  <p><strong>1. Vérifiez votre Service ID:</strong> Allez sur dashboard.emailjs.com/admin</p>
+                  <p><strong>2. Créez le template:</strong> template_bts_notification avec les variables nécessaires</p>
+                  <p><strong>3. Testez la config:</strong> Cliquez sur "Vérifier Configuration EmailJS"</p>
+                  <p><strong>4. Consultez les logs:</strong> Ouvrez la console (F12) pour les détails</p>
+                </div>
+              </div>
+
+              {/* Aide pour créer le template */}
+              <div className="bg-yellow-50 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-yellow-900 mb-2">
+                  📝 Variables du Template EmailJS
+                </h3>
+                <div className="text-sm text-yellow-800">
+                  <p className="mb-2">Créez un template avec ces variables :</p>
+                  <div className="bg-yellow-100 p-2 rounded font-mono text-xs">
+                    {`{{to_email}}, {{to_name}}, {{message}}, {{from_name}}, {{subject}}, {{ticket_id}}, {{site_name}}, {{alarm_message}}, {{team_name}}, {{status}}, {{company_name}}, {{dashboard_url}}`}
+                  </div>
                 </div>
               </div>
             </div>
