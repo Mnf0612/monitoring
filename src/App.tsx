@@ -18,6 +18,20 @@ function App() {
   const [currentPage, setCurrentPage] = useState<'dashboard' | 'tickets' | 'admin' | 'outages'>('dashboard');
 
   useEffect(() => {
+    // Handle URL hash navigation for ticket links
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      if (hash.startsWith('#tickets')) {
+        setCurrentPage('tickets');
+      }
+    };
+
+    // Check initial hash
+    handleHashChange();
+    
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleHashChange);
+
     // Initialize auth state
     const initialAuthState = authService.getAuthState();
     setAuthState({ ...initialAuthState, isLoading: false });
@@ -28,6 +42,12 @@ function App() {
     });
 
     return unsubscribe;
+    
+    // Cleanup hash listener
+    return () => {
+      unsubscribe();
+      window.removeEventListener('hashchange', handleHashChange);
+    };
   }, []);
 
   const handleLogin = () => {

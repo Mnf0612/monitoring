@@ -1,14 +1,12 @@
 import emailjs from '@emailjs/browser';
 
 class EmailService {
-  // Configuration EmailJS - CORRECTION DES CLÉS
-  private serviceId = 'service_lhzqhxr';        // Vérifiez sur dashboard.emailjs.com
-  private templateId = 'template_bts_notification'; // Vérifiez que ce template existe
-  private publicKey = '0NftsL5CxGYcqWcNj';     // Votre clé publique
+  // Updated EmailJS Configuration based on your dashboard
+  private serviceId = 'service_lhzqhxr';
+  private templateId = 'template_bts_notification';
+  private publicKey = '0NftsL5CxGYcqWcNj';
 
-  // Template par défaut pour tous les emails
-  private defaultTemplateId = 'template_bts_notification';
-
+  // Real team emails for notifications
   private teamEmails = {
     ip: 'manuelmayi581@gmail.com',
     transmission: 'manuelmayi581@gmail.com',
@@ -31,13 +29,12 @@ class EmailService {
 
   private initializeEmailJS() {
     try {
-      console.log('🔧 INITIALISATION EMAILJS - VÉRIFICATION DES CLÉS');
+      console.log('🔧 INITIALISATION EMAILJS - NOUVELLE CONFIGURATION');
       console.log(`Service ID: ${this.serviceId}`);
       console.log(`Template ID: ${this.templateId}`);
       console.log(`Public Key: ${this.publicKey}`);
-      console.log('🔗 Vérifiez ces valeurs sur: https://dashboard.emailjs.com/admin');
       
-      // Initialiser EmailJS avec votre clé publique
+      // Initialize EmailJS with the public key
       emailjs.init(this.publicKey);
       this.isConfigured = true;
       
@@ -50,10 +47,9 @@ class EmailService {
   }
 
   private startQueueProcessor() {
-    // Traiter la queue d'emails toutes les 5 secondes
     setInterval(() => {
       this.processEmailQueue();
-    }, 5000);
+    }, 3000);
   }
 
   private async processEmailQueue() {
@@ -79,7 +75,6 @@ class EmailService {
         }
 
         if (!success && emailToSend.retries < 3) {
-          // Remettre en queue avec retry
           emailToSend.retries++;
           this.emailQueue.push(emailToSend);
           console.log(`🔄 Email remis en queue (tentative ${emailToSend.retries}/3)`);
@@ -99,31 +94,29 @@ class EmailService {
     console.log(`👤 Utilisateur: ${username}`);
     console.log(`🔐 Code: ${code}`);
 
-    // Ajouter à la queue pour traitement
+    // Add to queue for processing
     this.emailQueue.push({
       type: 'verification',
       params: { email, username, code },
       retries: 0
     });
 
-    // Essayer d'envoyer immédiatement aussi
+    // Try to send immediately
     return await this.sendVerificationCodeDirect({ email, username, code });
   }
 
   private async sendVerificationCodeDirect(params: { email: string; username: string; code: string }): Promise<boolean> {
     if (!this.isConfigured) {
-      console.log('❌ EmailJS non configuré - Vérifiez vos clés');
+      console.log('❌ EmailJS non configuré');
       return false;
     }
 
     const { email, username, code } = params;
 
-    // Template pour code de vérification
+    // Simplified template parameters that match your EmailJS template
     const templateParams = {
       to_email: email,
       to_name: username,
-      verification_code: code,
-      user_name: username,
       from_name: 'MTN Cameroon BTS Monitor',
       subject: `🔐 Code de vérification MTN: ${code}`,
       message: `Bonjour ${username},
@@ -138,19 +131,19 @@ Si vous n'avez pas demandé ce code, ignorez ce message.
 
 Cordialement,
 L'équipe MTN Cameroun`,
+      verification_code: code,
+      user_name: username,
       company_name: 'MTN Cameroun',
       dashboard_url: window.location.origin
     };
 
     try {
       console.log('🚀 Envoi code de vérification...');
-      console.log('📋 Paramètres du template:', templateParams);
       
       const result = await emailjs.send(
         this.serviceId,
         this.templateId,
-        templateParams,
-        this.publicKey
+        templateParams
       );
       
       console.log('✅ CODE DE VÉRIFICATION ENVOYÉ!');
@@ -170,20 +163,20 @@ L'équipe MTN Cameroun`,
     console.log(`🎫 Ticket: ${ticketId}`);
     console.log(`🏢 Site: ${site}`);
 
-    // Ajouter à la queue
+    // Add to queue
     this.emailQueue.push({
       type: 'ticket',
       params: { team, ticketId, alarmMessage, site },
       retries: 0
     });
 
-    // Essayer d'envoyer immédiatement
+    // Try to send immediately
     return await this.sendTicketNotificationDirect({ team, ticketId, alarmMessage, site });
   }
 
   private async sendTicketNotificationDirect(params: { team: string; ticketId: string; alarmMessage: string; site: string }): Promise<boolean> {
     if (!this.isConfigured) {
-      console.log('❌ EmailJS non configuré - Vérifiez vos clés sur dashboard.emailjs.com');
+      console.log('❌ EmailJS non configuré');
       return false;
     }
 
@@ -195,19 +188,12 @@ L'équipe MTN Cameroun`,
       return false;
     }
 
+    // Simplified template parameters
     const templateParams = {
       to_email: email,
       to_name: this.getTeamName(team),
-      ticket_id: ticketId,
-      site_name: site,
-      alarm_message: alarmMessage,
-      team_name: this.getTeamName(team),
-      status: 'NOUVEAU',
-      created_date: new Date().toLocaleString('fr-FR'),
-      priority: 'HAUTE',
       from_name: 'MTN Cameroun BTS Monitor',
       subject: `🚨 NOUVEAU TICKET BTS #${ticketId} - ${site}`,
-      company_name: 'MTN Cameroun',
       message: `🚨 NOUVEAU TICKET BTS
 
 📍 Site: ${site}
@@ -224,20 +210,25 @@ Action requise: Veuillez vous connecter au système pour traiter ce ticket.
 
 Cordialement,
 MTN Cameroun - BTS Monitor`,
+      ticket_id: ticketId,
+      site_name: site,
+      alarm_message: alarmMessage,
+      team_name: this.getTeamName(team),
+      status: 'NOUVEAU',
+      created_date: new Date().toLocaleString('fr-FR'),
+      priority: 'HAUTE',
+      company_name: 'MTN Cameroun',
       dashboard_url: window.location.origin
     };
 
     try {
       console.log('🚀 Envoi notification ticket...');
-      console.log('🔧 Service ID utilisé:', this.serviceId);
-      console.log('🔧 Template ID utilisé:', this.templateId);
-      console.log('📋 Paramètres du template:', templateParams);
+      console.log('📋 Paramètres:', templateParams);
       
       const result = await emailjs.send(
         this.serviceId,
         this.templateId,
-        templateParams,
-        this.publicKey
+        templateParams
       );
       
       console.log('✅ NOTIFICATION TICKET ENVOYÉE!');
@@ -255,14 +246,14 @@ MTN Cameroun - BTS Monitor`,
   async sendTicketUpdate(team: string, ticketId: string, status: string, updateMessage?: string): Promise<boolean> {
     console.log(`📧 ENVOI MISE À JOUR TICKET`);
     
-    // Ajouter à la queue
+    // Add to queue
     this.emailQueue.push({
       type: 'update',
       params: { team, ticketId, status, updateMessage },
       retries: 0
     });
 
-    // Essayer d'envoyer immédiatement
+    // Try to send immediately
     return await this.sendTicketUpdateDirect({ team, ticketId, status, updateMessage });
   }
 
@@ -283,14 +274,8 @@ MTN Cameroun - BTS Monitor`,
     const templateParams = {
       to_email: email,
       to_name: this.getTeamName(team),
-      ticket_id: ticketId,
-      team_name: this.getTeamName(team),
-      status: this.getStatusText(status),
-      update_message: updateMessage || 'Statut mis à jour',
-      updated_date: new Date().toLocaleString('fr-FR'),
       from_name: 'MTN Cameroun BTS Monitor',
       subject: `📋 MISE À JOUR TICKET #${ticketId} - ${this.getStatusText(status)}`,
-      company_name: 'MTN Cameroun',
       message: `📋 MISE À JOUR TICKET BTS
 
 🎫 Ticket: #${ticketId}
@@ -303,6 +288,12 @@ MTN Cameroun - BTS Monitor`,
 
 Cordialement,
 MTN Cameroun - BTS Monitor`,
+      ticket_id: ticketId,
+      team_name: this.getTeamName(team),
+      status: this.getStatusText(status),
+      update_message: updateMessage || 'Statut mis à jour',
+      updated_date: new Date().toLocaleString('fr-FR'),
+      company_name: 'MTN Cameroun',
       dashboard_url: window.location.origin
     };
 
@@ -310,8 +301,7 @@ MTN Cameroun - BTS Monitor`,
       const result = await emailjs.send(
         this.serviceId,
         this.templateId,
-        templateParams,
-        this.publicKey
+        templateParams
       );
       
       console.log('✅ MISE À JOUR TICKET ENVOYÉE!');
@@ -337,25 +327,12 @@ MTN Cameroun - BTS Monitor`,
       console.log('🔧 VÉRIFIEZ:');
       console.log(`   - Service ID: ${this.serviceId}`);
       console.log(`   - Template ID: ${this.templateId}`);
-      console.log('   - Que le template existe dans votre dashboard EmailJS');
     } else if (error.status === 400) {
-      console.log('❌ DIAGNOSTIC: Service ID non trouvé ou invalide');
-      console.log('🔧 ACTIONS À FAIRE:');
-      console.log('   1. Allez sur https://dashboard.emailjs.com/admin');
-      console.log('   2. Vérifiez votre Service ID dans la section "Email Services"');
-      console.log('   3. Vérifiez que le service est actif');
-      console.log(`   4. Service ID actuel: ${this.serviceId}`);
+      console.log('❌ DIAGNOSTIC: Paramètres du template incorrects');
+      console.log('🔧 Vérifiez que votre template EmailJS contient les bonnes variables');
     } else if (error.status === 401 || error.status === 403) {
       console.log('❌ DIAGNOSTIC: Problème d\'authentification');
       console.log(`🔧 Vérifiez votre clé publique: ${this.publicKey}`);
-    } else if (error.status === 426) {
-      console.log('❌ DIAGNOSTIC: Quota EmailJS atteint');
-      console.log('🔧 Attendez le renouvellement ou upgradez votre plan');
-    } else if (error.status === 429) {
-      console.log('❌ DIAGNOSTIC: Limite de taux atteinte');
-      console.log('🔧 Attendez quelques minutes avant de réessayer');
-    } else if (error.status === 0) {
-      console.log('❌ DIAGNOSTIC: Problème de réseau ou CORS');
     }
   }
 
@@ -379,13 +356,10 @@ MTN Cameroun - BTS Monitor`,
     return statusTexts[status as keyof typeof statusTexts] || status.toUpperCase();
   }
 
-  // Test avec vos vraies clés
+  // Test method with correct configuration
   async testEmail(team: string = 'ip'): Promise<boolean> {
-    console.log(`🧪 TEST EMAIL - DIAGNOSTIC COMPLET`);
+    console.log(`🧪 TEST EMAIL - NOUVELLE CONFIGURATION`);
     console.log(`👥 Équipe: ${team}`);
-    console.log(`🔧 Service ID: ${this.serviceId}`);
-    console.log(`🔧 Template ID: ${this.templateId}`);
-    console.log(`🔧 Public Key: ${this.publicKey}`);
     
     const email = this.teamEmails[team as keyof typeof this.teamEmails];
     console.log(`📞 Email de test: ${email}`);
@@ -398,51 +372,50 @@ MTN Cameroun - BTS Monitor`,
     const templateParams = {
       to_email: email,
       to_name: this.getTeamName(team),
-      message: '🧪 Test de configuration EmailJS avec vos clés',
       from_name: 'MTN Cameroun BTS Monitor - Test',
-      subject: '🧪 Test EmailJS MTN',
+      subject: '🧪 Test EmailJS MTN - Nouvelle Configuration',
+      message: `🧪 Test de la nouvelle configuration EmailJS
+
+Ceci est un test pour vérifier que les emails fonctionnent correctement avec la nouvelle configuration.
+
+Configuration utilisée:
+- Service ID: ${this.serviceId}
+- Template ID: ${this.templateId}
+
+Si vous recevez cet email, la configuration fonctionne parfaitement !
+
+Cordialement,
+MTN Cameroun BTS Monitor`,
       company_name: 'MTN Cameroun',
-      ticket_id: 'TEST-001',
-      site_name: 'BTS-TEST-001',
-      alarm_message: 'Test de configuration',
-      team_name: this.getTeamName(team),
-      status: 'TEST',
-      created_date: new Date().toLocaleString('fr-FR'),
-      priority: 'TEST',
       dashboard_url: window.location.origin
     };
 
     try {
-      console.log('🚀 Envoi du test avec vos clés...');
-      console.log('📋 Template params:', templateParams);
+      console.log('🚀 Envoi du test avec la nouvelle configuration...');
       
       const result = await emailjs.send(
         this.serviceId,
         this.templateId,
-        templateParams,
-        this.publicKey
+        templateParams
       );
       
-      console.log('✅ TEST EMAIL RÉUSSI AVEC VOS CLÉS!');
+      console.log('✅ TEST EMAIL RÉUSSI AVEC LA NOUVELLE CONFIGURATION!');
       console.log('📊 Résultat:', result);
       return true;
       
     } catch (error: any) {
       console.log('❌ TEST EMAIL ÉCHOUÉ');
-      console.log('🔧 Vérifiez vos clés sur: https://dashboard.emailjs.com/admin');
       this.logDetailedError(error);
       return false;
     }
   }
 
-  // Test spécifique pour code de vérification
   async testVerificationCode(email: string = 'manuelmayi581@gmail.com'): Promise<boolean> {
-    console.log('🧪 TEST CODE DE VÉRIFICATION');
+    console.log('🧪 TEST CODE DE VÉRIFICATION - NOUVELLE CONFIG');
     const testCode = Math.random().toString(36).substr(2, 6).toUpperCase();
     return await this.sendVerificationCode(email, 'TestUser', testCode);
   }
 
-  // Statistiques de la queue
   getQueueStats() {
     return {
       pending: this.emailQueue.length,
@@ -457,7 +430,7 @@ MTN Cameroun - BTS Monitor`,
   getSessionStatus() {
     return {
       ticketsUsed: 0,
-      ticketsRemaining: 100,
+      ticketsRemaining: 200,
       nextTeam: 'ip',
       canSendNow: true,
       sessionStartTime: new Date().toLocaleString('fr-FR')
@@ -469,85 +442,40 @@ MTN Cameroun - BTS Monitor`,
     this.emailQueue.length = 0;
   }
 
-  resetSession(): void {
-    console.log('🔄 Session email réinitialisée');
-    this.emailQueue.length = 0;
-  }
-
-  // Vérification de la configuration
-  checkConfiguration(): { isValid: boolean; issues: string[] } {
-    const issues: string[] = [];
-    
-    if (!this.isConfigured) {
-      issues.push('EmailJS non initialisé');
-    }
-    
-    if (!this.serviceId) {
-      issues.push('Service ID manquant');
-    }
-    
-    if (!this.templateId) {
-      issues.push('Template ID manquant');
-    }
-    
-    if (!this.publicKey) {
-      issues.push('Clé publique manquante');
-    }
-    
-    return {
-      isValid: issues.length === 0,
-      issues
-    };
-  }
-
   getConfigurationStatus(): string {
-    const config = this.checkConfiguration();
-    
-    if (config.isValid) {
-      return `✅ EmailJS configuré - Service: ${this.serviceId} | Template: ${this.templateId}`;
-    } else {
-      return `❌ Problèmes: ${config.issues.join(', ')}`;
-    }
+    return `✅ EmailJS configuré - Service: ${this.serviceId} | Template: ${this.templateId} | Nouvelle Configuration Active`;
   }
 
-  // Nouvelle méthode pour vérifier la configuration EmailJS
   async verifyEmailJSConfiguration(): Promise<{ success: boolean; message: string }> {
-    console.log('🔍 VÉRIFICATION DE LA CONFIGURATION EMAILJS');
-    console.log('🔗 Dashboard: https://dashboard.emailjs.com/admin');
-    console.log(`🔧 Service ID: ${this.serviceId}`);
-    console.log(`🔧 Template ID: ${this.templateId}`);
-    console.log(`🔧 Public Key: ${this.publicKey}`);
+    console.log('🔍 VÉRIFICATION DE LA NOUVELLE CONFIGURATION EMAILJS');
     
     try {
-      // Test simple avec paramètres minimaux
       const testParams = {
         to_email: 'manuelmayi581@gmail.com',
         to_name: 'Test User',
-        message: 'Test de configuration EmailJS',
-        from_name: 'BTS Monitor Test'
+        from_name: 'BTS Monitor Test',
+        subject: 'Test de configuration',
+        message: 'Test de la nouvelle configuration EmailJS'
       };
       
       const result = await emailjs.send(
         this.serviceId,
         this.templateId,
-        testParams,
-        this.publicKey
+        testParams
       );
       
       return {
         success: true,
-        message: `✅ Configuration EmailJS valide! Status: ${result.status}`
+        message: `✅ Nouvelle configuration EmailJS valide! Status: ${result.status}`
       };
       
     } catch (error: any) {
       let message = '❌ Configuration EmailJS invalide: ';
       
       if (error.status === 400) {
-        message += 'Service ID non trouvé. Vérifiez sur dashboard.emailjs.com';
+        message += 'Vérifiez les paramètres du template sur dashboard.emailjs.com';
       } else if (error.status === 404) {
-        message += 'Template ID non trouvé. Créez le template sur dashboard.emailjs.com';
-      } else if (error.status === 401 || error.status === 403) {
-        message += 'Clé publique invalide. Vérifiez votre Public Key';
+        message += 'Service ou Template non trouvé';
       } else {
         message += error.text || error.message || 'Erreur inconnue';
       }

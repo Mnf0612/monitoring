@@ -230,7 +230,14 @@ export function OutageModal({ outage, isOpen, onClose }: OutageModalProps) {
                       <p className="text-blue-800 font-medium">#{outage.ticketId}</p>
                       <p className="text-blue-600 text-sm">Ticket créé automatiquement pour cette panne</p>
                     </div>
-                    <button className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors">
+                    <button 
+                      onClick={() => {
+                        // Navigate to tickets page and filter by ticket ID
+                        window.location.hash = `#tickets?ticket=${outage.ticketId}`;
+                        onClose();
+                      }}
+                      className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+                    >
                       Voir le ticket
                     </button>
                   </div>

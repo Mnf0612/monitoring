@@ -7,9 +7,10 @@ import { AlertTriangle, Clock, CheckCircle, User, ChevronRight } from 'lucide-re
 interface TicketListProps {
   tickets: Ticket[];
   onTicketClick: (ticket: Ticket) => void;
+  highlightedTicketId?: string | null;
 }
 
-export function TicketList({ tickets, onTicketClick }: TicketListProps) {
+export function TicketList({ tickets, onTicketClick, highlightedTicketId }: TicketListProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'open': return 'text-red-600 bg-red-50 border-red-200';
@@ -71,7 +72,9 @@ export function TicketList({ tickets, onTicketClick }: TicketListProps) {
           <div
             key={ticket.id}
             onClick={() => onTicketClick(ticket)}
-            className="px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors"
+            className={`px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors ${
+              highlightedTicketId === ticket.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+            }`}
           >
             <div className="flex items-center justify-between">
               <div className="flex-1">

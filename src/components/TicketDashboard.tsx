@@ -15,6 +15,30 @@ export function TicketDashboard() {
   const [selectedPriority, setSelectedPriority] = useState<string>('all');
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [highlightedTicketId, setHighlightedTicketId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Check for ticket ID in URL hash
+    const hash = window.location.hash;
+    const ticketMatch = hash.match(/ticket=([^&]+)/);
+    if (ticketMatch) {
+      const ticketId = ticketMatch[1];
+      setHighlightedTicketId(ticketId);
+      
+      // Find and open the ticket
+      const ticket = tickets.find(t => t.id === ticketId);
+      if (ticket) {
+        setSelectedTicket(ticket);
+        setIsModalOpen(true);
+      }
+      
+      // Clear the hash after processing
+      setTimeout(() => {
+        window.location.hash = '#tickets';
+        setHighlightedTicketId(null);
+      }, 1000);
+    }
+  }, [tickets]);
 
   useEffect(() => {
     const allTickets = ticketService.getTickets();
@@ -115,6 +139,7 @@ export function TicketDashboard() {
           <TicketList
             tickets={filteredTickets}
             onTicketClick={handleTicketClick}
+            highlightedTicketId={highlightedTicketId}
           />
         </div>
       </div>
