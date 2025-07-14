@@ -119,7 +119,7 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
               {/* Configuration actuelle */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="text-sm font-medium text-gray-900 mb-3">
-                  Configuration EmailJS - À Vérifier
+                  Configuration EmailJS - NOUVELLE API
                 </h3>
                 <div className="space-y-2 text-sm text-gray-600">
                   <div className="flex justify-between">
@@ -133,6 +133,10 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
                   <div className="flex justify-between">
                     <span>Clé publique:</span>
                     <span className="font-mono text-blue-600">0NftsL5CxGYcqWcNj</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>API Version:</span>
+                    <span className="font-mono text-green-600">NOUVELLE API</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Dashboard:</span>
@@ -293,26 +297,28 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
               {/* Instructions */}
               <div className="bg-blue-50 rounded-lg p-4">
                 <h3 className="text-sm font-medium text-blue-900 mb-2">
-                  🔧 Instructions de Configuration
+                  🔧 Instructions - NOUVELLE API
                 </h3>
                 <div className="text-sm text-blue-800 space-y-2">
-                  <p><strong>1. Vérifiez votre Service ID:</strong> Allez sur dashboard.emailjs.com/admin</p>
-                  <p><strong>2. Créez le template:</strong> template_bts_notification avec les variables nécessaires</p>
-                  <p><strong>3. Testez la config:</strong> Cliquez sur "Vérifier Configuration EmailJS"</p>
-                  <p><strong>4. Consultez les logs:</strong> Ouvrez la console (F12) pour les détails</p>
+                  <p><strong>✅ Nouvelle API configurée:</strong> service_lhzqhxr</p>
+                  <p><strong>✅ Template actif:</strong> template_bts_notification</p>
+                  <p><strong>🔐 Double authentification:</strong> Codes de vérification activés</p>
+                  <p><strong>🎫 Notifications tickets:</strong> Emails automatiques activés</p>
+                  <p><strong>📊 Logs détaillés:</strong> Console (F12) pour debugging</p>
                 </div>
               </div>
 
               {/* Aide pour créer le template */}
               <div className="bg-yellow-50 rounded-lg p-4">
                 <h3 className="text-sm font-medium text-yellow-900 mb-2">
-                  📝 Variables du Template EmailJS
+                  📝 Variables du Template - NOUVELLE API
                 </h3>
                 <div className="text-sm text-yellow-800">
-                  <p className="mb-2">Créez un template avec ces variables :</p>
+                  <p className="mb-2">Template configuré avec ces variables :</p>
                   <div className="bg-yellow-100 p-2 rounded font-mono text-xs">
-                    {`{{to_email}}, {{to_name}}, {{message}}, {{from_name}}, {{subject}}, {{ticket_id}}, {{site_name}}, {{alarm_message}}, {{team_name}}, {{status}}, {{company_name}}, {{dashboard_url}}`}
+                    {`{{to_email}}, {{to_name}}, {{from_name}}, {{subject}}, {{message}}, {{verification_code}}, {{ticket_id}}, {{site_name}}, {{team_name}}, {{company_name}}, {{dashboard_url}}`}
                   </div>
+                  <p className="mt-2 text-xs">✅ Template optimisé pour double authentification et notifications</p>
                 </div>
               </div>
             </div>
