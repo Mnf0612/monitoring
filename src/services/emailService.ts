@@ -3,7 +3,8 @@ import emailjs from '@emailjs/browser';
 class EmailService {
   // Configuration EmailJS corrigée avec les vraies clés
   private serviceId = 'Alarm_alerte';
-  private templateId = 'template_bts_ticket';
+  private ticketTemplateId = 'template_bts_ticket';      // Pour notifications tickets
+  private updateTemplateId = 'template_bts_update';      // Pour mises à jour
   private publicKey = '0NftsL5CxGYcqWcNj';
 
   // Configuration avec les vraies clés - tenter le mode réel
@@ -160,7 +161,7 @@ class EmailService {
       
       const result = await emailjs.send(
         this.serviceId,
-        this.templateId,
+        this.ticketTemplateId,  // Utiliser le template pour tickets/vérification
         {
           to_email: email,
           to_name: username,
@@ -262,7 +263,7 @@ class EmailService {
 
     // Code pour envoi réel (désactivé car compte bloqué)
     try {
-      const result = await emailjs.send(this.serviceId, this.templateId, {
+      const result = await emailjs.send(this.serviceId, this.ticketTemplateId, {
         to_email: email,
         to_name: this.getTeamName(team),
         subject: `🚨 NOUVEAU TICKET BTS #${ticketId} - ${site}`,
@@ -327,7 +328,7 @@ class EmailService {
 
     // Code pour envoi réel
     try {
-      const result = await emailjs.send(this.serviceId, this.templateId, {
+      const result = await emailjs.send(this.serviceId, this.updateTemplateId, {  // Utiliser le template pour mises à jour
         to_email: email,
         subject: `📋 MISE À JOUR TICKET #${ticketId}`,
         message: `Ticket mis à jour: ${status}`,
@@ -449,7 +450,7 @@ class EmailService {
 
     // Code pour test réel
     try {
-      const result = await emailjs.send(this.serviceId, this.templateId, {
+      const result = await emailjs.send(this.serviceId, this.ticketTemplateId, {
         to_email: email,
         subject: '🧪 Test EmailJS MTN',
         message: 'Test du système email',
@@ -524,7 +525,7 @@ class EmailService {
     }
     
     try {
-      const result = await emailjs.send(this.serviceId, this.templateId, {
+      const result = await emailjs.send(this.serviceId, this.ticketTemplateId, {
         to_email: 'test@example.com',
         subject: 'Test de configuration',
         message: 'Test de vérification',

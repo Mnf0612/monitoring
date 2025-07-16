@@ -127,8 +127,12 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
                     <span className="font-mono text-blue-600">Alarm_alerte</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Template ID:</span>
+                    <span>Template Tickets:</span>
                     <span className="font-mono text-blue-600">template_bts_ticket</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Template Updates:</span>
+                    <span className="font-mono text-blue-600">template_bts_update</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Clé publique:</span>
@@ -301,7 +305,7 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
                 </h3>
                 <div className="text-sm text-blue-800 space-y-2">
                   <p><strong>✅ Nouvelle API configurée:</strong> Alarm_alerte</p>
-                  <p><strong>✅ Template actif:</strong> template_bts_ticket</p>
+                  <p><strong>✅ Templates actifs:</strong> template_bts_ticket + template_bts_update</p>
                   <p><strong>🔐 Double authentification:</strong> Codes de vérification activés</p>
                   <p><strong>🎫 Notifications tickets:</strong> Emails automatiques activés</p>
                   <p><strong>📊 Logs détaillés:</strong> Console (F12) pour debugging</p>
@@ -311,14 +315,15 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
               {/* Aide pour créer le template */}
               <div className="bg-yellow-50 rounded-lg p-4">
                 <h3 className="text-sm font-medium text-yellow-900 mb-2">
-                  📝 Variables du Template - NOUVELLE API
+                  📝 Templates Configurés - NOUVELLE API
                 </h3>
                 <div className="text-sm text-yellow-800">
-                  <p className="mb-2">Template configuré avec ces variables :</p>
+                  <p className="mb-2">Templates configurés :</p>
                   <div className="bg-yellow-100 p-2 rounded font-mono text-xs">
-                    {`{{to_email}}, {{to_name}}, {{from_name}}, {{subject}}, {{message}}, {{verification_code}}, {{ticket_id}}, {{site_name}}, {{team_name}}, {{company_name}}, {{dashboard_url}}`}
+                    <div><strong>template_bts_ticket:</strong> Notifications + Vérification</div>
+                    <div><strong>template_bts_update:</strong> Mises à jour tickets</div>
                   </div>
-                  <p className="mt-2 text-xs">✅ Template optimisé pour double authentification et notifications</p>
+                  <p className="mt-2 text-xs">✅ Templates optimisés selon le type d'email</p>
                 </div>
               </div>
             </div>
