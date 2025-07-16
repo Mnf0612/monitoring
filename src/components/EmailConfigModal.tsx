@@ -128,7 +128,7 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
                   </div>
                   <div className="flex justify-between">
                     <span>Template ID:</span>
-                    <span className="font-mono text-blue-600">template_bts_notification</span>
+                    <span className="font-mono text-blue-600">template_bts_ticket</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Clé publique:</span>
@@ -300,8 +300,8 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
                   🔧 Instructions - NOUVELLE API
                 </h3>
                 <div className="text-sm text-blue-800 space-y-2">
-                  <p><strong>✅ Nouvelle API configurée:</strong> service_lhzqhxr</p>
-                  <p><strong>✅ Template actif:</strong> template_bts_notification</p>
+                  <p><strong>✅ Nouvelle API configurée:</strong> Alarm_alerte</p>
+                  <p><strong>✅ Template actif:</strong> template_bts_ticket</p>
                   <p><strong>🔐 Double authentification:</strong> Codes de vérification activés</p>
                   <p><strong>🎫 Notifications tickets:</strong> Emails automatiques activés</p>
                   <p><strong>📊 Logs détaillés:</strong> Console (F12) pour debugging</p>

@@ -3,7 +3,7 @@ import emailjs from '@emailjs/browser';
 class EmailService {
   // Configuration EmailJS corrigée avec les vraies clés
   private serviceId = 'Alarm_alerte';
-  private templateId = 'template_bts_notification';
+  private templateId = 'template_bts_ticket';
   private publicKey = '0NftsL5CxGYcqWcNj';
 
   // Configuration avec les vraies clés - tenter le mode réel
