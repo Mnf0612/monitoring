@@ -1,13 +1,13 @@
 import emailjs from '@emailjs/browser';
 
 class EmailService {
-  // Configuration EmailJS de secours - Compte de test alternatif
-  private serviceId = 'service_test_backup';
-  private templateId = 'template_test_backup';
-  private publicKey = 'test_public_key_backup';
+  // Configuration EmailJS corrigée avec les vraies clés
+  private serviceId = 'Alarm_alerte';
+  private templateId = 'template_bts_notification';
+  private publicKey = '0NftsL5CxGYcqWcNj';
 
-  // Configuration de fallback en mode simulation
-  private isSimulationMode = true;
+  // Configuration avec les vraies clés - tenter le mode réel
+  private isSimulationMode = false;
   private simulationSuccess = true;
 
   // Real team emails for notifications

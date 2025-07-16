@@ -124,7 +124,7 @@ export function EmailConfigModal({ isOpen, onClose }: EmailConfigModalProps) {
                 <div className="space-y-2 text-sm text-gray-600">
                   <div className="flex justify-between">
                     <span>Service ID:</span>
-                    <span className="font-mono text-blue-600">service_lhzqhxr</span>
+                    <span className="font-mono text-blue-600">Alarm_alerte</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Template ID:</span>
